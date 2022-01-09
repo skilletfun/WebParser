@@ -41,6 +41,18 @@ def get_response(url, headers=None):
 
 
 # =====================================================================#
+# Prepare save folder
+# =====================================================================#
+def prepare_save_folder(save_folder, title):
+    save_folder = os.path.join(save_folder, title)
+    save_folder = save_folder.replace(' ', '_').replace('.', '').replace('|', '-')
+
+    if not os.path.exists(save_folder):
+        os.mkdir(save_folder)
+    return save_folder
+
+
+# =====================================================================#
 # Parse html and find urls
 # =====================================================================#
 def find_images(src, tag_type, tag_type_for_search, value_of_ttfs):
@@ -86,6 +98,7 @@ def download_images(images, save_folder, url, timeout, _headers=None, name_of_fi
     pool = mp.Pool(mp.cpu_count())
 
     i = 0
+
     for img_url in images:
         temp_url = img_url
 
@@ -93,13 +106,12 @@ def download_images(images, save_folder, url, timeout, _headers=None, name_of_fi
             _headers['Host'] = temp_url.replace('http://', '').replace('https://', '').split('/')[0]
 
         pool.apply_async(download, args=(img_url, _headers, str(name_of_files[i] + 1), save_folder))
-        i += 1
 
+        i += 1
         time.sleep(timeout)
 
     pool.close()
     pool.join()
-
 
 # =====================================================================#
 # Archive images to zip

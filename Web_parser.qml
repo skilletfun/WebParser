@@ -30,7 +30,7 @@ Window {
 
     Text {
         id: title
-        text: 'WebParser v1.0'
+        text: 'WebParser v1.1'
         font.pixelSize: 32
         font.bold: true
         font.family: 'Arial'
@@ -174,16 +174,7 @@ Window {
 
 // --------------------- Download Next Chapter ------------------------//
 
-        CheckBox {
-            id: try_download_next_chapter
-            text: 'Try download\n' + 'next chapter'
-            font.pixelSize: 16
-            font.family: 'Arial'
-            anchors.left: parent.left
-            anchors.top: do_archive.top
-            anchors.leftMargin: 30
-            anchors.topMargin: 40
-        }
+
 
 // ---------------------- Timeout ------------------------//
 
@@ -193,7 +184,7 @@ Window {
             font.family: 'Arial'
             font.pixelSize: 16
             anchors.left: parent.left
-            anchors.top: try_download_next_chapter.top
+            anchors.top: do_archive.top
             anchors.leftMargin: 40
             anchors.topMargin: 60
         }
@@ -254,9 +245,27 @@ Window {
                 browser_location_settings_popup.open();
             }
         }
+
+            //--------------------------------- Button Redownloaded Images Settings ---------------------------//
+
+        Button {
+            id: redownload_images_btn
+            background: Rectangle { color: 'transparent' }
+            font.family: 'Arial'
+            font.pixelSize: 16
+            text: 'Redownload'
+            anchors.top: browser_location.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.topMargin: 5
+            palette.buttonText: redownload_images_btn.pressed ? '#005c84' : redownload_images_btn.hovered ? '#0082B9' : 'black'
+
+            onReleased: {
+                redownload_images_popup.open();
+            }
+        }
     }
 
-//--------------------------------- Popup Account Settings ---------------------------//
+//--------------------------------- Popup Browser Location Settings ---------------------------//
 
     Popup {
         id: browser_location_settings_popup
@@ -317,6 +326,67 @@ Window {
             }
         }
     }
+
+
+//--------------------------------- Popup Redownloaded Images Settings ---------------------------//
+
+    Popup {
+        id: redownload_images_popup
+        width: 600
+        height: 150
+        anchors.centerIn: parent
+        modal: true
+
+        background: Rectangle { border.color: "black"; radius: 20 }
+
+        enter: Transition {
+            NumberAnimation { property: 'opacity'; from: 0; to: 1; duration: 200 }
+        }
+
+        exit: Transition {
+            NumberAnimation { property: 'opacity'; from: 1; to: 0; duration: 200 }
+        }
+
+        Text {
+            id: redownload_images_text
+            text: 'Numbers images that should to redownload'
+            font.family: 'Arial'
+            font.pixelSize: 16
+            x: 45
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.margins: 15
+        }
+
+        TextField {
+            id: redownload_images_field
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: redownload_images_text.bottom
+            anchors.margins: 15
+            anchors.topMargin: 10
+            height: 50
+
+            background: Rectangle { radius: 10; border.width: 1; color: redownload_images_field.focus ?
+                    color_press : redownload_images_field.hovered ? color_hover : 'white'; }
+
+            placeholderText: '1 3 13'
+            font.pixelSize: 18
+
+            onAccepted: {
+                focus = false;
+            }
+
+            onEditingFinished: {
+                focus = false;
+            }
+
+            Component.onCompleted : {
+                path = parser.get_path_to_browser();
+            }
+        }
+    }
+
 
 //--------------------------------- End Additional Settings------------------------------------//
 
@@ -412,11 +482,11 @@ Window {
             }
         }
 
-//----------------------------- Label redownload images----------------------------------------------//
+//----------------------------- Label count of chapters ----------------------------------------------//
 
         Text {
-            id: chapter_redownload_text
-            text: 'Redownload numbers'
+            id: chapter_count_text
+            text: 'Count of chapters\n' + '* for all available'
             font.family: 'Arial'
             font.pixelSize: 16
             anchors.left: chapter_url_text.left
@@ -424,21 +494,24 @@ Window {
             anchors.topMargin: 40
         }
 
-//----------------------------- Field with numbers redownloaded files ----------------------------------------------//
+//----------------------------- Field with count of chapters ----------------------------------------------//
 
         TextField {
-            id: missed_field
+            id: chapter_count_field
             anchors.left: chapter_url_text.left
-            anchors.right: url_field.right
+            width: 70
+            horizontalAlignment: Text.AlignHCenter
 
-            anchors.top: chapter_redownload_text.bottom
+            validator: RegExpValidator { regExp: /[0-9*]+/ }
+
+            anchors.top: chapter_count_text.bottom
             anchors.topMargin: 10
             height: 50
 
-            background: Rectangle { radius: 10; border.width: 1; color: missed_field.focus ?
-                    color_press : missed_field.hovered ? color_hover : 'white'; }
+            background: Rectangle { radius: 10; border.width: 1; color: chapter_count_field.focus ?
+                    color_press : chapter_count_field.hovered ? color_hover : 'white'; }
 
-            placeholderText: "1 3 9 12 43"
+            placeholderText: "1"
             font.pixelSize: 18
 
             onAccepted: {
@@ -450,11 +523,22 @@ Window {
             }
         }
 
+        CheckBox {
+            id: try_download_next_chapter
+            visible: false
+            text: 'Try download next chapter'
+            font.pixelSize: 16
+            font.family: 'Arial'
+            anchors.left: chapter_count_field.right
+            anchors.verticalCenter: chapter_count_field.verticalCenter
+            anchors.leftMargin: 100
+        }
+
 //----------------------------- Button save folder ----------------------------------------------//
 
         Button {
             id: chooseSaveFolder
-            height: missed_field.height
+            height: chapter_count_field.height
             width: height
 
             icon.source: 'savefolder.png'
@@ -462,7 +546,7 @@ Window {
             icon.width: width * 0.9
             icon.height: icon.width
 
-            anchors.verticalCenter: missed_field.verticalCenter
+            anchors.verticalCenter: chapter_count_field.verticalCenter
             anchors.left: btn_urls.left
 
             background: Rectangle { color: chooseSaveFolder.pressed ?
@@ -495,8 +579,9 @@ Window {
              color_press : startParse.hovered ? color_hover : 'white'; }
 
         onReleased: {
-            parser.parse(url_field.text, slider_timeout.value, chooseSaveFolderDialog.folder, missed_field.text,
-                do_archive.checked, try_download_next_chapter.checked, browser_location_field.text);
+            var b = chapter_count_field.text === '' ? false : true;
+            parser.parse(url_field.text, slider_timeout.value, chooseSaveFolderDialog.folder,
+            redownload_images_field.text, do_archive.checked, b, chapter_count_field.text);
         }
     }
 }

@@ -1,5 +1,6 @@
 # This Python file uses the following encoding: utf-8
 import sys
+import multiprocessing as mp
 import os
 from Web_parser import Web_parser
 from PyQt5.QtGui import QGuiApplication, QIcon
@@ -15,6 +16,7 @@ APPLICATION_NAME = 'MultiTool'
 SETTINGS_TRAY = 'settings/tray'
 
 if __name__ == "__main__":
+    mp.freeze_support()
     app = QGuiApplication(sys.argv)
     engine = QQmlApplicationEngine()
 

@@ -33,8 +33,10 @@ class Web_parser(QObject):
                 ex_path = 'chromedriver'
 
             browser = webdriver.Chrome(chrome_options=options, executable_path=ex_path)
+
             browser.get('https://www.google.com')
             browser.close()
+            browser.quit()
             res = 'True'
         finally:
             if res == '':
@@ -43,8 +45,8 @@ class Web_parser(QObject):
                 return res
 
 
-    @pyqtSlot(str, int, str, str, bool, bool, str)
-    def parse(self, url, timeout, save_folder, redownload_numbers, do_archive, try_next, path_to_browser):
+    @pyqtSlot(str, int, str, str, bool, str)
+    def parse(self, url, timeout, save_folder, redownload_imgs, do_archive, chapter_count):
         if save_folder.startswith("file://"):
             save_folder = save_folder[self.countOfDeletedSymbols:]
 
@@ -57,7 +59,10 @@ class Web_parser(QObject):
         else:
             urls = [url]
 
-        attrs = [url, timeout, save_folder, redownload_numbers, do_archive, try_next]
+        if chapter_count == '':
+            chapter_count = 1
+
+        attrs = [url, timeout, save_folder, redownload_imgs, do_archive, chapter_count]
 
         for url in urls:
             if 'manga.bilibili.com' in url:
@@ -75,8 +80,7 @@ class Web_parser(QObject):
             elif 'manhuadb.com' in url:
                 manhuadb.parse(*attrs)
             elif 'page.kakao.com' in url:
-                if path_to_browser == '':
-                    path_to_browser = self.get_path_to_browser()
+                path_to_browser = self.get_path_to_browser()
                 page_kakao_com.parse(*attrs, path_to_browser)
 
     @pyqtSlot(result=str)

@@ -1,12 +1,12 @@
 import time
 import os
 import sys
-from parsers.basic_functions import archivate
+from parsers.basic_functions import archivate, prepare_save_folder
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-def parse(url, timeout, save_folder, redownload_numbers, do_archive, try_next):
+def parse(url, timeout, save_folder, redownload_numbers, do_archive, chapter_count):
     options = Options()
     options.add_argument("--headless")
     options.add_argument("--disable-features=VizDisplayCompositor")
@@ -23,7 +23,15 @@ def parse(url, timeout, save_folder, redownload_numbers, do_archive, try_next):
     true_save_folder = save_folder
     old_tilte = ''
 
+    if chapter_count != '*':
+        chapter_count = int(chapter_count)
+        step = 1
+    else:
+        step = 0
+        chapter_count = 1
+
     while True:
+        chapter_count -= step
         browser.execute_script("document.getElementsByClassName(\"info-hud\")[0].style.display = \"none\";")
         browser.execute_script("document.getElementsByClassName(\"message-box\")[0].style.display = \"none\";")
         browser.execute_script("document.getElementsByClassName(\"manga-reader-ui\")[0].style.display = \"none\";")
@@ -47,10 +55,7 @@ def parse(url, timeout, save_folder, redownload_numbers, do_archive, try_next):
 
         if title == old_tilte: break
 
-        save_folder = os.path.join(save_folder, title)
-
-        if not os.path.exists(save_folder):
-            os.mkdir(save_folder)
+        save_folder = prepare_save_folder(save_folder, title)
 
         for element in numbers:
             width = str(browser.execute_script(f"return document.getElementsByClassName(\"image-list\")[0]"
@@ -65,7 +70,7 @@ def parse(url, timeout, save_folder, redownload_numbers, do_archive, try_next):
         if do_archive:
             archivate(save_folder)
 
-        if try_next:
+        if chapter_count > 0:
             browser.execute_script('return document.getElementsByClassName(\'pagedown\')[0].click();')
             save_folder = true_save_folder
             old_tilte = title

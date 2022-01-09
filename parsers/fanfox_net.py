@@ -1,8 +1,8 @@
-def parse(url, timeout, save_folder, redownload_numbers, do_archive, try_next):
+def parse(url, timeout, save_folder, redownload_numbers, do_archive, chapter_count):
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
     import time, sys, os
-    from parsers.basic_functions import download_images, archivate, rebuild_redownload_images
+    from parsers.basic_functions import download_images, archivate, rebuild_redownload_images, prepare_save_folder
 
     options = Options()
     options.add_argument("--headless")
@@ -18,8 +18,17 @@ def parse(url, timeout, save_folder, redownload_numbers, do_archive, try_next):
 
     headers = {'User-Agent': "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0"}
     true_save_folder = save_folder
+
+    if chapter_count != '*':
+        chapter_count = int(chapter_count)
+        step = 1
+    else:
+        step = 0
+        chapter_count = 1
+
     try:
         while url != 'https://fanfox.net':
+            chapter_count -= step
             urls = []
             browser.get(url)
 
@@ -29,10 +38,8 @@ def parse(url, timeout, save_folder, redownload_numbers, do_archive, try_next):
             n = int(browser.execute_script('return imagecount'))
 
             title = browser.execute_script('return document.title')
-            save_folder = os.path.join(true_save_folder, title)
 
-            if not os.path.exists(save_folder):
-                os.mkdir(save_folder)
+            save_folder = prepare_save_folder(save_folder, title)
 
             url_img = image.get_attribute('src')
 
@@ -61,8 +68,9 @@ def parse(url, timeout, save_folder, redownload_numbers, do_archive, try_next):
             if do_archive:
                 archivate(save_folder)
 
-            if try_next:
+            if chapter_count > 0:
                 url = 'https://fanfox.net' + browser.execute_script('return nextchapterurl')
+                save_folder = true_save_folder
             else: break
     finally:
         browser.close()

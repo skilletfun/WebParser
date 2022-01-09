@@ -1,14 +1,24 @@
 import requests, os
 from bs4 import BeautifulSoup as bs
-from parsers.basic_functions import download_images, archivate, rebuild_redownload_images
+from parsers.basic_functions import download_images, archivate, rebuild_redownload_images, prepare_save_folder
 
-def parse(url, timeout, save_folder, redownload_numbers, do_archive, try_next):
+def parse(url, timeout, save_folder, redownload_numbers, do_archive, chapter_count):
 
     true_url = url
     headers = {'User-Agent': "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0"}
     soup = download(url, headers, save_folder, redownload_numbers, do_archive, timeout)
 
-    if try_next:
+    if chapter_count != '*':
+        chapter_count = int(chapter_count)
+        step = 1
+    else:
+        step = 0
+        chapter_count = 1
+
+    chapter_count -= 1
+
+    if chapter_count > 0:
+        chapter_count -= step
         chapters_urls = soup.find('ol', {'class': 'links-of-books'}).find_all('a')
         l = len(chapters_urls)
 
@@ -29,7 +39,7 @@ def download(url, headers, save_folder, redownload_numbers, do_archive, timeout)
 
     response = requests.get(url, headers=headers)
     soup = bs(response.text, "lxml")
-    title_page = soup.find('title').text
+    title = soup.find('title').text
 
     while tries > 0:
         response = requests.get(url, headers=headers)
@@ -47,11 +57,7 @@ def download(url, headers, save_folder, redownload_numbers, do_archive, timeout)
         else:
             tries -= 1
 
-    save_folder = os.path.join(save_folder, title_page)
-    save_folder = save_folder.replace(' ', '_').replace('.', '').replace('|', '-')
-
-    if not os.path.exists(save_folder):
-        os.mkdir(save_folder)
+    save_folder = prepare_save_folder(save_folder, title)
 
     if redownload_numbers != '':
         urls = rebuild_redownload_images(redownload_numbers, urls)

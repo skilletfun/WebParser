@@ -1,20 +1,16 @@
 import os
-from parsers.basic_functions import find_images, rebuild_redownload_images, download_images, get_response
+from parsers.basic_functions import find_images, rebuild_redownload_images, download_images, get_response, prepare_save_folder
 
 
-def parse(url, timeout, save_folder, redownload_numbers, do_archive, try_next):
+def parse(url, timeout, save_folder, redownload_numbers, do_archive, chapter_count):
     src = get_response(url)
 
-    title_page, images = find_images(src, 'div', 'id', 'img-container')
+    title, images = find_images(src, 'div', 'id', 'img-container')
 
     if redownload_numbers != '':
         images = rebuild_redownload_images(redownload_numbers, images)
 
-    save_folder = os.path.join(save_folder, title_page)
-    save_folder = save_folder.replace(' ', '_').replace('.', '').replace('|', '-')
-
-    if not os.path.exists(save_folder):
-        os.mkdir(save_folder)
+    save_folder = prepare_save_folder(save_folder, title)
 
     images = [img.get('data-src') for img in images]
 

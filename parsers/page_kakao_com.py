@@ -1,12 +1,11 @@
-def parse(url, timeout, save_folder, redownload_numbers, do_archive, try_next, path_to_browser):
-    from parsers.basic_functions import download_images, archivate, rebuild_redownload_images
-    import time, sys, os
+def parse(url, timeout, save_folder, redownload_numbers, do_archive, chapter_count, path_to_browser):
+    from parsers.basic_functions import download_images, archivate, rebuild_redownload_images, prepare_save_folder
+    import time, sys
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
 
     options = Options()
 
-    # options.add_argument("--headless")
     options.add_argument('--blink-settings=imagesEnabled=false')
 
     options.add_argument("--disable-features=VizDisplayCompositor")
@@ -24,9 +23,19 @@ def parse(url, timeout, save_folder, redownload_numbers, do_archive, try_next, p
     true_save_folder = save_folder
     old_title = ''
 
+    if chapter_count != '*':
+        chapter_count = int(chapter_count)
+        step = 1
+    else:
+        step = 0
+        chapter_count = 1
+
     try:
+        browser.execute_script('window.stop();')
         browser.get(url)
         while True:
+            chapter_count -= step
+
             check = browser.execute_script('return document.getElementsByClassName(\'css-88gyaf\')[0];')
 
             if check is None:
@@ -41,11 +50,7 @@ def parse(url, timeout, save_folder, redownload_numbers, do_archive, try_next, p
             title = browser.title
             if title == old_title: break
 
-            save_folder = os.path.join(save_folder, title)
-            save_folder = save_folder.replace(' ', '_').replace('.', '').replace('|', '-')
-
-            if not os.path.exists(save_folder):
-                os.mkdir(save_folder)
+            save_folder = prepare_save_folder(save_folder, title)
 
             if redownload_numbers != '':
                 urls = rebuild_redownload_images(redownload_numbers, urls)
@@ -55,7 +60,7 @@ def parse(url, timeout, save_folder, redownload_numbers, do_archive, try_next, p
             if do_archive:
                 archivate(save_folder)
 
-            if try_next:
+            if chapter_count > 0:
                 next_btn = browser.find_element_by_xpath('/html/body/div[1]/div/div[2]/div[2]/span[4]')
 
                 if next_btn is None: break
