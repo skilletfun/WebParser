@@ -30,7 +30,7 @@ Window {
 
     Text {
         id: title
-        text: 'WebParser v1.1'
+        text: 'WebParser v1.2'
         font.pixelSize: 32
         font.bold: true
         font.family: 'Arial'
@@ -42,7 +42,7 @@ Window {
 
     Text {
         id: help_title
-        text: 'Support 8 sites'
+        text: 'Support 11 sites'
         font.pixelSize: 16
         font.family: 'Arial'
         anchors.left: parent.left
@@ -128,6 +128,15 @@ Window {
             }
             ListElement {
                 _text: 'page.kakao.com'
+            }
+            ListElement {
+                _text: 'comic.naver.com'
+            }
+            ListElement {
+                _text: 'kuaikanmanhua.com'
+            }
+            ListElement {
+                _text: 'ac.qq.com'
             }
         }
     }

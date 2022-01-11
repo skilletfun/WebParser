@@ -2,8 +2,8 @@ import sys
 
 from PyQt5.QtCore import pyqtSlot, QObject
 
-from parsers import webtoons_com, fanfox_net, comic_naver_com
-from parsers import manga_bilibili_com, webmota_com, manhuadb
+from parsers import webtoons_com, fanfox_net, comic_naver_com, kuaikanmanhua_com
+from parsers import manga_bilibili_com, webmota_com, manhuadb, ac_qq_com
 from parsers import rawdevart_com, mangareader_to, page_kakao_com
 
 
@@ -84,6 +84,10 @@ class Web_parser(QObject):
                 page_kakao_com.parse(*attrs, path_to_browser)
             elif 'comic.naver.com' in url:
                 comic_naver_com.parse(*attrs)
+            elif 'kuaikanmanhua.com' in url:
+                kuaikanmanhua_com.parse(*attrs)
+            elif 'ac.qq.com' in url:
+                ac_qq_com.parse(*attrs)
 
     @pyqtSlot(result=str)
     def get_path_to_browser(self):
