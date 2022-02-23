@@ -18,9 +18,6 @@ class Worker(QObject):
     @pyqtSlot()
     def run(self):
         self.running = True
-#        
-#        if self.save_folder.startswith("file://"):
-#            self.save_folder = self.save_folder[self.countOfDeletedSymbols:]
 
         if self.url.startswith('file://'):
             self.url = self.url[self.countOfDeletedSymbols:]

@@ -35,10 +35,9 @@ class basic_parser(QObject):
         else: self.save_folder = config['save_folder']
 
 
-    # =====================================================================#
-    # Update values of self vars from attrs
-    # =====================================================================#
     def update_vars(self, attrs):
+    """ Update values of self vars from attrs. """
+    
         self.url = attrs['url']
         self.timeout = attrs['timeout']
         self.true_save_folder = self.save_folder
@@ -58,10 +57,9 @@ class basic_parser(QObject):
             self.chapter_count = 1
 
 
-    # =====================================================================#
-    # Download function. Declare single because of async
-    # =====================================================================#
     async def download(self, session, url, _headers, name, save_folder):
+    """ Download function. Declare single because of async. """
+    
         tries = self.config['download_tries']
         status = 0
 
@@ -82,28 +80,28 @@ class basic_parser(QObject):
             await f.close()
             self.total_download_images += 1
 
-    # =====================================================================#
-    # Find element
-    # =====================================================================#
+
     def find_element(self, src, tag, type, value):
+    """ Find element in html-page. """
+    
         soup = bs(src, "lxml")
         res = soup.find(tag, {type: value})
         return res
 
-    # =====================================================================#
-    # Get response and return text
-    # =====================================================================#
+
     def get_response(self, url, headers=None):
+    """ Get response and return text. """
+    
         if headers is None:
             headers = {'User-Agent': "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0"}
         response = requests.get(url, headers=headers)
         src = response.text
         return src
 
-    # =====================================================================#
-    # Prepare save folder (create if doesn't exist)
-    # =====================================================================#
+
     def prepare_save_folder(self, title):
+    """ Prepare save folder (create if doesn't exist). """
+    
         t_title = ''
         for el in title:
             if not el in ' .|/\\?*><:"!^;,№':
@@ -115,10 +113,10 @@ class basic_parser(QObject):
             os.mkdir(save_folder)
         return save_folder
 
-    # =====================================================================#
-    # Parse html and find urls
-    # =====================================================================#
+
     def find_images(self, src, tag_type, tag_type_for_search, value_of_ttfs, custom_tag=None):
+    """ Parse html and find urls. """
+    
         soup = bs(src, "lxml")
         title_page = soup.find('title').text
 
@@ -133,22 +131,25 @@ class basic_parser(QObject):
 
         return title_page, images
 
-    # =====================================================================#
-    # Rebuild array with urls
-    # =====================================================================#
+
     def rebuild_redownload_images(self, numbers, images):
+    """ Rebuild array with urls. """
+    
         numbers = numbers.split()
         numbers = [int(i) - 1 for i in numbers]
 
         return [images[i] for i in numbers]
 
-    # =====================================================================#
-    # Download images by urls
-    # =====================================================================#
+
     def download_images(self, images, save_folder, url, timeout, _headers=None, name_of_files=''):
+    """ Download images by urls. Start async function. """
+    
         asyncio.run(self.t_download_images(images, save_folder, url, timeout, _headers, name_of_files))
 
+
     async def t_download_images(self, images, save_folder, url, timeout, _headers=None, name_of_files=''):
+    """ Download images by urls. """
+    
         if _headers is None:
             _headers = {
                 "Accept": "image/webp,*/*",
@@ -186,20 +187,20 @@ class basic_parser(QObject):
                     i += 1
                 await asyncio.gather(*tasks)
 
-    # =====================================================================#
-    # Download function. Declare single because of async
-    # =====================================================================#
+
     def check_all_checkboxes(self, title):
+    """ Check checkboxes. """
+    
         if self.do_merge:
             self.merge_images()
 
         if self.do_archive:
             self.archivate(title)
 
-    # =====================================================================#
-    # Download images, create folder, redownload images and ... in one func
-    # =====================================================================#
+
     def full_download(self, images, title):
+    """ Main function. Start full download. """
+    
         self.current_title = title
         self.total_images = len(images)
         self.total_download_images = 0
@@ -211,10 +212,10 @@ class basic_parser(QObject):
         self.download_images(images, self.save_folder, self.url, self.timeout, name_of_files=self.redownload_numbers)
         self.check_all_checkboxes(title)
 
-    # =====================================================================#
-    # Archive images to zip
-    # =====================================================================#
+
     def archivate(self, title):
+    """ Archive images to zip-file. """
+    
         import patoolib
         from os.path import split, join
 
@@ -227,10 +228,10 @@ class basic_parser(QObject):
 
         patoolib.create_archive(join(save_folder, t_name + '.zip'), [self.save_folder])
 
-    # =====================================================================#
-    # Merge images into one PNG
-    # =====================================================================#    
+   
     def merge_images(self):
+    """ Merge images into one PNG. """
+    
         from PIL import Image
 
         name = os.path.split(self.save_folder)[-1]
@@ -269,10 +270,10 @@ class basic_parser(QObject):
         res_img.save(file_name, quality=95)
         res_img.close()
 
-    # =====================================================================#
-    # Return path to chromedriver
-    # =====================================================================#
+
     def get_chromedriver_path(self):
+    """ Return path to chromedriver. """
+    
         import sys
 
         if not sys.platform.startswith("linux"):

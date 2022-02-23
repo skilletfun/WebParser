@@ -31,10 +31,10 @@ class Web_parser(QObject):
         'version': ''
     }
 
-    # =====================================================================#
-    # Init: create log file, redirect all print to log file, load config
-    # =====================================================================#
+
     def __init__(self):
+    """Init: create log file, redirect all print to log file, load config. """
+        
         super(Web_parser, self).__init__()
 
         self.old_stdout = sys.stdout
@@ -74,11 +74,10 @@ class Web_parser(QObject):
         os.rename('logs/log.txt', f'logs/{time_now}.txt')
 
 
-    # =====================================================================#
-    # Main function. Parsing
-    # =====================================================================#
     @pyqtSlot(str, int, str, str, bool, bool, str)
     def parse(self, url, timeout, save_folder, redownload_numbers, do_archive, do_merge, chapter_count):
+    """ Main function. Parsing. """
+    
         self.save_to_log('Start parsing...')
         
         # Check given save_folder. Change it in 'config.json' if needed
@@ -96,20 +95,18 @@ class Web_parser(QObject):
         self.my_thread.start()
 
 
-    # =====================================================================#
-    # Return current config in string
-    # =====================================================================#
     @pyqtSlot(result=str)
     def get_current_config(self):
+    """ Return current config in string. """
+    
         return json.dumps(self.config)
 
 
-    # =====================================================================#
-    # Update 'config.json'. Rewrite file
-    # =====================================================================#
     @pyqtSlot()
     @pyqtSlot(str)
     def update_config_file(self, config=None):
+    """ Update 'config.json'. Rewrite file. """
+    
         self.save_to_log('Update "config.json"')
         try:
             if not config is None:
@@ -123,11 +120,10 @@ class Web_parser(QObject):
             self.save_to_log(e)
 
 
-    # =====================================================================#
-    # Check the accuracy of setted up chromedriver
-    # =====================================================================#
     @pyqtSlot(result=str)
     def check_driver(self):
+    """ Check the accuracy of setted up chromedriver. """
+    
         self.save_to_log('Check driver')
         res = ''
         try:
@@ -153,20 +149,18 @@ class Web_parser(QObject):
             else: return res
 
 
-    # =====================================================================#
-    # Close the thread. Can be used for cancel downloading
-    # =====================================================================#
     @pyqtSlot()
     def cancel_download(self):
+    """ Close the thread. Can be used for cancel downloading. """
+    
         self.save_to_log('Cancel download / Finish download')
         self.my_thread.quit()
 
 
-    # =====================================================================#
-    # Return the number of total images in chapter
-    # =====================================================================#
     @pyqtSlot(result=int)
     def get_total_images(self):
+    """ Return the number of total images in chapter. """
+    
         total_images = 0
         try:
             total_images = self.worker.parser.total_images
@@ -175,11 +169,10 @@ class Web_parser(QObject):
         return total_images
 
 
-    # =====================================================================#
-    # Return the number of images that just downloaded
-    # =====================================================================#
     @pyqtSlot(result=int)
     def get_total_download_images(self):
+    """ Return the number of images that just downloaded. """
+    
         total_download_images = 0
         try:
             total_download_images = self.worker.parser.total_download_images
@@ -188,11 +181,10 @@ class Web_parser(QObject):
         return total_download_images
 
 
-    # =====================================================================#
-    # Return the title of current downloaded chapter
-    # =====================================================================#
     @pyqtSlot(result=str)
     def get_current_title(self):
+    """ Return the title of current downloaded chapter. """
+    
         current_title = ''
         try:
             current_title = self.worker.parser.current_title
@@ -201,11 +193,10 @@ class Web_parser(QObject):
         return current_title
 
 
-    # =====================================================================#
-    # Check state of parser (download or not) at the moment
-    # =====================================================================#
     @pyqtSlot(result=str)
     def get_running(self):
+    """ Check state of parser (download or not) at the moment. """
+    
         running = False
         try:
             running = self.worker.running
@@ -221,11 +212,10 @@ class Web_parser(QObject):
         return str(running)
 
 
-    # =====================================================================#
-    # Return version of Google Chrome or Chromium
-    # =====================================================================#
     @pyqtSlot(result=str)
     def get_browser_version(self):
+    """ Return version of Google Chrome or Chromium. """
+    
         self.save_to_log('Try to get version of browser')
         
         # Windows
@@ -251,11 +241,10 @@ class Web_parser(QObject):
         return version
 
 
-    # =====================================================================#
-    # Download correct chromedriver
-    # =====================================================================#
     @pyqtSlot()
     def download_chromedriver(self):
+    """ Download correct chromedriver. """
+    
         self.save_to_log('Try download chromedriver...')
         try:
             import requests as r
@@ -278,20 +267,18 @@ class Web_parser(QObject):
             self.save_to_log(e)
 
 
-    # =====================================================================#
-    # Save information to log-file
-    # =====================================================================#
     @pyqtSlot(str)
     def save_to_log(self, log):
+    """ Save information to log-file. """
+    
         print('Log:', log)
         print()
 
 
-    # =====================================================================#
-    # Open log-file (in Windows basic app (Notepad))
-    # =====================================================================#
     @pyqtSlot()
     def show_log(self):
+    """ Open log-file (in Windows basic app (Notepad)). """
+    
         self.save_to_log('Open last log...')
         try:
             l_dir = os.listdir('logs')
@@ -315,11 +302,10 @@ class Web_parser(QObject):
             self.save_to_log(e)
 
 
-    # =====================================================================#
-    # Show 'help.pdf'
-    # =====================================================================#
     @pyqtSlot()
     def get_the_help(self):
+    """ Show 'help.pdf'. """
+    
         self.save_to_log('Open "help.pdf"...')
         try:            
             if not sys.platform.startswith("linux"):

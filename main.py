@@ -12,9 +12,7 @@ import asyncio
 
 # pyinstaller main.py --icon=icon.ico --noconsole
 
-# =====================================================================#
-# Define necessary variables
-# =====================================================================#
+""" Define necessary variables. """
 
 ORGANIZATION_NAME = 'SkilletfunINC'
 ORGANIZATION_DOMAIN = 'empty.com'
@@ -30,10 +28,8 @@ if __name__ == "__main__":
 
     ctx = engine.rootContext()
 
-    # =====================================================================#
-    # Set up the application
-    # =====================================================================#
-
+    """ Set up the application. """
+    
     app.setApplicationName(ORGANIZATION_NAME)
     app.setOrganizationDomain(ORGANIZATION_DOMAIN)
     app.setApplicationName(APPLICATION_NAME)
@@ -41,6 +37,7 @@ if __name__ == "__main__":
 
     web = Web_parser()
     
+    """ If autoupdate is enabled -> """
     if web.config['auto_update']:
         import requests
         import subprocess
@@ -52,6 +49,7 @@ if __name__ == "__main__":
         
         tag = url.url.split('/')[-1]
         
+        """ If tags not equals. """
         if not tag == web.config['version']:
             base_url = 'https://github.com/skilletfun/WebParser/releases/download/'
             
@@ -74,9 +72,7 @@ if __name__ == "__main__":
 
     ctx.setContextProperty("parser", web)
 
-    # =====================================================================#
-    # Start app
-    # =====================================================================#
+    """ Start app. """
 
     engine.load(os.path.join(os.path.dirname(__file__), "res/Web_parser.qml"))
 
