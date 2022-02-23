@@ -36,7 +36,7 @@ class basic_parser(QObject):
 
 
     def update_vars(self, attrs):
-    """ Update values of self vars from attrs. """
+        """ Update values of self vars from attrs. """
     
         self.url = attrs['url']
         self.timeout = attrs['timeout']
@@ -58,7 +58,7 @@ class basic_parser(QObject):
 
 
     async def download(self, session, url, _headers, name, save_folder):
-    """ Download function. Declare single because of async. """
+        """ Download function. Declare single because of async. """
     
         tries = self.config['download_tries']
         status = 0
@@ -82,7 +82,7 @@ class basic_parser(QObject):
 
 
     def find_element(self, src, tag, type, value):
-    """ Find element in html-page. """
+        """ Find element in html-page. """
     
         soup = bs(src, "lxml")
         res = soup.find(tag, {type: value})
@@ -90,7 +90,7 @@ class basic_parser(QObject):
 
 
     def get_response(self, url, headers=None):
-    """ Get response and return text. """
+        """ Get response and return text. """
     
         if headers is None:
             headers = {'User-Agent': "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0"}
@@ -100,7 +100,7 @@ class basic_parser(QObject):
 
 
     def prepare_save_folder(self, title):
-    """ Prepare save folder (create if doesn't exist). """
+        """ Prepare save folder (create if doesn't exist). """
     
         t_title = ''
         for el in title:
@@ -115,7 +115,7 @@ class basic_parser(QObject):
 
 
     def find_images(self, src, tag_type, tag_type_for_search, value_of_ttfs, custom_tag=None):
-    """ Parse html and find urls. """
+        """ Parse html and find urls. """
     
         soup = bs(src, "lxml")
         title_page = soup.find('title').text
@@ -133,7 +133,7 @@ class basic_parser(QObject):
 
 
     def rebuild_redownload_images(self, numbers, images):
-    """ Rebuild array with urls. """
+        """ Rebuild array with urls. """
     
         numbers = numbers.split()
         numbers = [int(i) - 1 for i in numbers]
@@ -142,13 +142,13 @@ class basic_parser(QObject):
 
 
     def download_images(self, images, save_folder, url, timeout, _headers=None, name_of_files=''):
-    """ Download images by urls. Start async function. """
+        """ Download images by urls. Start async function. """
     
         asyncio.run(self.t_download_images(images, save_folder, url, timeout, _headers, name_of_files))
 
 
     async def t_download_images(self, images, save_folder, url, timeout, _headers=None, name_of_files=''):
-    """ Download images by urls. """
+        """ Download images by urls. """
     
         if _headers is None:
             _headers = {
@@ -189,7 +189,7 @@ class basic_parser(QObject):
 
 
     def check_all_checkboxes(self, title):
-    """ Check checkboxes. """
+        """ Check checkboxes. """
     
         if self.do_merge:
             self.merge_images()
@@ -199,7 +199,7 @@ class basic_parser(QObject):
 
 
     def full_download(self, images, title):
-    """ Main function. Start full download. """
+        """ Main function. Start full download. """
     
         self.current_title = title
         self.total_images = len(images)
@@ -214,7 +214,7 @@ class basic_parser(QObject):
 
 
     def archivate(self, title):
-    """ Archive images to zip-file. """
+        """ Archive images to zip-file. """
     
         import patoolib
         from os.path import split, join
@@ -230,7 +230,7 @@ class basic_parser(QObject):
 
    
     def merge_images(self):
-    """ Merge images into one PNG. """
+        """ Merge images into one PNG. """
     
         from PIL import Image
 
@@ -272,7 +272,7 @@ class basic_parser(QObject):
 
 
     def get_chromedriver_path(self):
-    """ Return path to chromedriver. """
+        """ Return path to chromedriver. """
     
         import sys
 

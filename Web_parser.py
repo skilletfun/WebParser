@@ -33,11 +33,14 @@ class Web_parser(QObject):
 
 
     def __init__(self):
-    """Init: create log file, redirect all print to log file, load config. """
+        """ Init: create log file, redirect all print to log file, load config. """
         
         super(Web_parser, self).__init__()
 
         self.old_stdout = sys.stdout
+        if not os.path.exists('logs'):
+            os.mkdir('logs')
+        
         self.log_file = open('logs/log.txt', 'w')
         sys.stdout = self.log_file
 
@@ -76,7 +79,7 @@ class Web_parser(QObject):
 
     @pyqtSlot(str, int, str, str, bool, bool, str)
     def parse(self, url, timeout, save_folder, redownload_numbers, do_archive, do_merge, chapter_count):
-    """ Main function. Parsing. """
+        """ Main function. Parsing. """
     
         self.save_to_log('Start parsing...')
         
@@ -97,7 +100,7 @@ class Web_parser(QObject):
 
     @pyqtSlot(result=str)
     def get_current_config(self):
-    """ Return current config in string. """
+        """ Return current config in string. """
     
         return json.dumps(self.config)
 
@@ -105,7 +108,7 @@ class Web_parser(QObject):
     @pyqtSlot()
     @pyqtSlot(str)
     def update_config_file(self, config=None):
-    """ Update 'config.json'. Rewrite file. """
+        """ Update 'config.json'. Rewrite file. """
     
         self.save_to_log('Update "config.json"')
         try:
@@ -122,7 +125,7 @@ class Web_parser(QObject):
 
     @pyqtSlot(result=str)
     def check_driver(self):
-    """ Check the accuracy of setted up chromedriver. """
+        """ Check the accuracy of setted up chromedriver. """
     
         self.save_to_log('Check driver')
         res = ''
@@ -151,7 +154,7 @@ class Web_parser(QObject):
 
     @pyqtSlot()
     def cancel_download(self):
-    """ Close the thread. Can be used for cancel downloading. """
+        """ Close the thread. Can be used for cancel downloading. """
     
         self.save_to_log('Cancel download / Finish download')
         self.my_thread.quit()
@@ -159,7 +162,7 @@ class Web_parser(QObject):
 
     @pyqtSlot(result=int)
     def get_total_images(self):
-    """ Return the number of total images in chapter. """
+        """ Return the number of total images in chapter. """
     
         total_images = 0
         try:
@@ -171,7 +174,7 @@ class Web_parser(QObject):
 
     @pyqtSlot(result=int)
     def get_total_download_images(self):
-    """ Return the number of images that just downloaded. """
+        """ Return the number of images that just downloaded. """
     
         total_download_images = 0
         try:
@@ -183,7 +186,7 @@ class Web_parser(QObject):
 
     @pyqtSlot(result=str)
     def get_current_title(self):
-    """ Return the title of current downloaded chapter. """
+        """ Return the title of current downloaded chapter. """
     
         current_title = ''
         try:
@@ -195,7 +198,7 @@ class Web_parser(QObject):
 
     @pyqtSlot(result=str)
     def get_running(self):
-    """ Check state of parser (download or not) at the moment. """
+        """ Check state of parser (download or not) at the moment. """
     
         running = False
         try:
@@ -214,7 +217,7 @@ class Web_parser(QObject):
 
     @pyqtSlot(result=str)
     def get_browser_version(self):
-    """ Return version of Google Chrome or Chromium. """
+        """ Return version of Google Chrome or Chromium. """
     
         self.save_to_log('Try to get version of browser')
         
@@ -243,7 +246,7 @@ class Web_parser(QObject):
 
     @pyqtSlot()
     def download_chromedriver(self):
-    """ Download correct chromedriver. """
+        """ Download correct chromedriver. """
     
         self.save_to_log('Try download chromedriver...')
         try:
@@ -269,7 +272,7 @@ class Web_parser(QObject):
 
     @pyqtSlot(str)
     def save_to_log(self, log):
-    """ Save information to log-file. """
+        """ Save information to log-file. """
     
         print('Log:', log)
         print()
@@ -277,7 +280,7 @@ class Web_parser(QObject):
 
     @pyqtSlot()
     def show_log(self):
-    """ Open log-file (in Windows basic app (Notepad)). """
+        """ Open log-file (in Windows basic app (Notepad)). """
     
         self.save_to_log('Open last log...')
         try:
@@ -304,7 +307,7 @@ class Web_parser(QObject):
 
     @pyqtSlot()
     def get_the_help(self):
-    """ Show 'help.pdf'. """
+        """ Show 'help.pdf'. """
     
         self.save_to_log('Open "help.pdf"...')
         try:            
