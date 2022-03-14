@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 from datetime import datetime
-from res.Worker import Worker
+from Worker import Worker
 
 
 class Web_parser(QObject):
@@ -27,8 +27,8 @@ class Web_parser(QObject):
         'requests_limit': 100,
         'semaphore_limit': 200,
         'download_tries': 5,
-        'auto_update': False,
-        'version': ''
+#        'auto_update': False,
+#        'version': 'v1.5'
     }
 
 
@@ -40,9 +40,9 @@ class Web_parser(QObject):
         self.old_stdout = sys.stdout
         if not os.path.exists('logs'):
             os.mkdir('logs')
-        
-        self.log_file = open('logs/log.txt', 'w')
-        sys.stdout = self.log_file
+
+        time_now = str(datetime.now()).replace(' ', '_').replace(':', '_')[:-7]
+        self.log_file = f'logs/{time_now}.txt'
 
         self.save_to_log('Init WebParser')
 
@@ -67,14 +67,6 @@ class Web_parser(QObject):
             self.save_to_log('Error while load "config.json"')
             self.save_to_log(e)
         self.save_to_log('Init WebParser complete')
-
-
-    def __del__(self):        
-        self.save_to_log('Close log')
-        self.log_file.close()
-        
-        time_now = str(datetime.now()).replace(' ', '_')[:-7]
-        os.rename('logs/log.txt', f'logs/{time_now}.txt')
 
 
     @pyqtSlot(str, int, str, str, bool, bool, str)
@@ -209,7 +201,7 @@ class Web_parser(QObject):
         if not running and self.notify_flag and self.config['notifications']:
             self.notify_flag = False
             if not sys.platform.startswith("linux"):
-                self.notifier.show_toast(title='WebParser', msg='Downloading all chapters complete', threaded=True)
+                self.notifier.show_toast(title='WebParser', msg='Downloading all chapters complete', icon_path='res/icon.ico', threaded=True)
             else:
                 os.system('notify-send "Downloading all chapters complete" "WebParser"')
         return str(running)
@@ -273,9 +265,9 @@ class Web_parser(QObject):
     @pyqtSlot(str)
     def save_to_log(self, log):
         """ Save information to log-file. """
-    
-        print('Log:', log)
-        print()
+
+        with open(self.log_file, 'a') as f:
+            f.write('Log: ' + log + '\n')
 
 
     @pyqtSlot()

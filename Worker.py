@@ -1,4 +1,5 @@
 from PyQt5.QtCore import pyqtSlot, QObject
+import time
 
 
 class Worker(QObject):
@@ -24,7 +25,7 @@ class Worker(QObject):
 
             with open(self.url, "r") as f:
                 urls = f.read().split('\n')
-                urls.pop()
+                if urls[-1] == '\n' or urls[-1] == '': urls.pop()
         else: urls = [self.url]
 
         if self.chapter_count == '':
@@ -70,6 +71,13 @@ class Worker(QObject):
             elif 'mangakakalots.com' in url:
                 from parsers.mangakakalots_com import mangakakalots_com
                 self.parser = mangakakalots_com(self.web_parser.config)
+            elif 'scansnelo.com' in url:
+                from parsers.scansnelo_com import scansnelo_com
+                self.parser = scansnelo_com(self.web_parser.config)
+            elif 'comico.kr' in url:
+                from parsers.comico_kr import comico_kr
+                self.parser = comico_kr(self.web_parser.config)
 
             if not self.parser is None: self.parser.parse(attrs)
-            self.running = False
+            time.sleep(1)
+        self.running = False

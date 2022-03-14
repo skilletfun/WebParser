@@ -37,7 +37,7 @@ Rectangle {
     Text {
         id: help_title
 
-        text: 'Support 12 sites'
+        text: 'Support 14 sites'
         font.pixelSize: 16
         font.family: 'Arial'
 
@@ -94,6 +94,11 @@ Rectangle {
 
             clip: true
             model: model_sites
+            
+            ScrollBar.vertical: ScrollBar {
+                active: true;
+                onActiveChanged: { if (!active) active = true; }
+            }
 
             headerPositioning: ListView.OverlayHeader
             header: Rectangle {
@@ -103,7 +108,7 @@ Rectangle {
                 width: parent.width
 
                 Text {
-                    text: '=     ©  -  required chromedriver     ='
+                    text: '-   ©  -  required chromedriver   -'
                     anchors.top: parent.top
                     anchors.horizontalCenter: parent.horizontalCenter
                     font.pixelSize: 16
@@ -126,9 +131,9 @@ Rectangle {
             id: model_sites
 
             Component.onCompleted: {
-                var arr = ['© ac.qq.com', 'comic.naver.com', '© fanfox.net',
+                var arr = ['© ac.qq.com', 'comic.naver.com', '© comico.kr (+ paid)', '© fanfox.net',
                            '© kuaikanmanhua.com', '© manga.bilibili.com', 'mangakakalots.com', '© mangareader.to',
-                           'manhuadb.com', '© page.kakao.com', 'rawdevart.com', 'webmota.com (baozihm.com)', 'webtoons.com'];
+                           'manhuadb.com', 'scansnelo.com', '© page.kakao.com (+ paid)', 'rawdevart.com', 'webmota.com (baozihm.com)', 'webtoons.com'];
                 arr.forEach(function(el){ append({ '_text': el }); });
             }
         }

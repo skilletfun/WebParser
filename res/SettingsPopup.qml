@@ -195,63 +195,63 @@ Popup {
                     }
                 }
 
-                Row { height: parent.cur_height; width: parent.width;
-                    Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
+//                Row { height: parent.cur_height; width: parent.width;
+//                    Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
 
-                Row {
-                    height: parent.cur_height
-                    width: parent.width
+//                Row {
+//                    height: parent.cur_height
+//                    width: parent.width
 
-                    Text {
-                        text: 'Auto update'
-                        font.pixelSize: 19
-                        font.family: 'Arial'
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
+//                    Text {
+//                        text: 'Auto update'
+//                        font.pixelSize: 19
+//                        font.family: 'Arial'
+//                        anchors.verticalCenter: parent.verticalCenter
+//                    }
 
-                    Switch {
-                        id: autoupdate
-                        padding: 0
-                        topInset: 0
-                        bottomInset: 0
-                        checked: config_auto_update
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        onReleased: { config_auto_update = checked; }
-                    }
-                }
+//                    Switch {
+//                        id: autoupdate
+//                        padding: 0
+//                        topInset: 0
+//                        bottomInset: 0
+//                        checked: config_auto_update
+//                        anchors.right: parent.right
+//                        anchors.verticalCenter: parent.verticalCenter
+//                        onReleased: { config_auto_update = checked; }
+//                    }
+//                }
 
-                Row { height: parent.cur_height; width: parent.width;
-                    Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
+//                Row { height: parent.cur_height; width: parent.width;
+//                    Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
 
-                Row {
-                    height: parent.cur_height
-                    width: parent.width
+//                Row {
+//                    height: parent.cur_height
+//                    width: parent.width
 
-                    Text {
-                        text: 'Available updates'
-                        font.pixelSize: 19
-                        font.family: 'Arial'
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
+//                    Text {
+//                        text: 'Available updates'
+//                        font.pixelSize: 19
+//                        font.family: 'Arial'
+//                        anchors.verticalCenter: parent.verticalCenter
+//                    }
 
-                    Button {
-                        enabled: text == 'No' ? false : true
-                        height: parent.cur_height
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.right: parent.right
+//                    Button {
+//                        enabled: text == 'No' ? false : true
+//                        height: parent.cur_height
+//                        anchors.verticalCenter: parent.verticalCenter
+//                        anchors.right: parent.right
 
-                        background: Rectangle { color: 'transparent' }
+//                        background: Rectangle { color: 'transparent' }
 
-                        font.family: 'Arial'
-                        font.pixelSize: 19
-                        text: 'No'
-                        padding: 0
-                        leftInset: 0
+//                        font.family: 'Arial'
+//                        font.pixelSize: 19
+//                        text: 'No'
+//                        padding: 0
+//                        leftInset: 0
 
-                        palette.buttonText: pressed ? '#005c84' : hovered ? '#0082B9' : 'black'
-                    }
-                }
+//                        palette.buttonText: pressed ? '#005c84' : hovered ? '#0082B9' : 'black'
+//                    }
+//                }
 
                 Row { height: parent.cur_height; width: parent.width;
                     Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
