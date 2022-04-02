@@ -1,24 +1,11 @@
 from parsers.basic_parser import basic_parser
-# https://www.comico.kr/comic/3593/chapter/12/product
+
 
 class comico_kr(basic_parser):
     def parse(self, attrs):
         self.update_vars(attrs)
 
-        import time, sys
-        from selenium import webdriver
-        from selenium.webdriver.chrome.options import Options
-
-        options = Options()
-        options.add_argument("--disable-features=VizDisplayCompositor")
-        if sys.platform.startswith('linux'):
-            options.add_argument('--password-store=gnome')
-        options.add_argument("--user-data-dir=" + self.config['path_to_browser'])
-
-        ex_path = self.get_chromedriver_path()
-
-        browser = webdriver.Chrome(chrome_options=options, executable_path=ex_path)
-        browser.minimize_window()
+        browser = self.init_browser(user=True)
 
         old_title = ''
 
@@ -26,50 +13,64 @@ class comico_kr(basic_parser):
             browser.execute_script('window.stop();')
             browser.switch_to.new_window('tab')
             time.sleep(1)
-            
+
             browser.get(self.url)
+            browser.minimize_window()
 
             temp_check = -1
 
             while True:
                 time.sleep(5)
-                
+
                 check = browser.execute_script('return document.getElementsByClassName(\'viewer_comic\')[0];')
-                
+
                 if check is None:
                     continue
                 elif int(check.get_attribute('childElementCount')) < 1 or int(check.get_attribute('childElementCount')) != temp_check:
                     temp_check = int(check.get_attribute('childElementCount'))
                     continue
-                    
 
                 self.chapter_count -= self.step
 
                 title = browser.execute_script('return document.getElementsByClassName(\'tit_comic\')[0].textContent;')
                 if title == old_title: break
 
-                images = browser.execute_script(
-                    'return document.getElementsByClassName(\'viewer_comic\')[0].getElementsByTagName(\'style\');')
+                self.current_title = title
+                self.total_images = int(browser.execute_script("return document.getElementsByClassName('viewer_comic')[0].children.length;"))
+                self.total_download_images = 0
 
+                now_downloaded = len(list(filter(lambda x: '?Policy=' in x.url, browser.requests)))
+
+                while now_downloaded < self.total_images:
+                    now_downloaded = len(list(filter(lambda x: '?Policy=' in x.url, browser.requests)))
+                    self.total_download_images = now_downloaded
+                    time.sleep(1)
+
+                time.sleep(3)
+
+                reqs = list(filter(lambda x: '?Policy=' in x.url, browser.requests))
+                images_in_bytes = []
+
+                images = browser.execute_script('return document.getElementsByClassName(\'viewer_comic\')[0].getElementsByTagName(\'style\');')
                 images = [el.get_attribute('innerHTML') for el in images]
-                
-                images = [el[el.index('https://') : el.index('\');')] for el in images if '0px' not in el.split()]
-                
-                self.full_download(images, title)
-                time.sleep(10)
-                if self.chapter_count > 0:
-                    try:
-                        old_title = title
-                        browser.execute_script('document.getElementsByClassName(\'link_next\')[0].click();')
-                        self.save_folder = self.true_save_folder
-                        max_wait = 10
+                images_names = [el[el.index('https://') : el.index('\');')] for el in images if '0px' not in el.split()]
 
-                        while title == old_title and max_wait > 0:
-                            title = browser.execute_script('return document.getElementsByClassName(\'tit_comic\')[0].textContent;')
-                            max_wait -= 1
-                            time.sleep(1)
-                    finally: pass
+                for i in range(self.total_images):
+                    for j in range(len(reqs)):
+                        if images_names[i] in reqs[j].url:
+                            images_in_bytes.append(reqs[j].response.body)
+                            reqs.pop(j)
+                            break
+
+                self.save_images_from_bytes(images_in_bytes, title)
+
+                if self.chapter_count > 0:
+                    s_next = "document.getElementsByClassName('link_next')[0].click();"
+                    s_title = "return document.getElementsByClassName('tit_comic')[0].textContent;"
+                    self.try_next_chapter(browser, s_next, title, s_title)
                 else: break
+        except Exception as e:
+            print(e)
         finally:
             browser.close()
             browser.quit()

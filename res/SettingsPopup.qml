@@ -7,14 +7,16 @@ Popup {
 
     property string config_save_folder: ''
     property string config_path_to_browser: ''
+    property string config_version: ''
 
-    property bool config_auto_update: false
     property bool config_remember_save_folder: true
     property bool config_notifications: true
 
-    property int config_requests_limit: 100
-    property int config_semaphore_limit: 200
-    property int config_download_tries: 5
+    property int config_requests_limit: 0
+    property int config_semaphore_limit: 0
+    property int config_download_tries: 0
+
+    property double config_scroll_delay: 0
 
     modal: true
 
@@ -195,64 +197,6 @@ Popup {
                     }
                 }
 
-//                Row { height: parent.cur_height; width: parent.width;
-//                    Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
-
-//                Row {
-//                    height: parent.cur_height
-//                    width: parent.width
-
-//                    Text {
-//                        text: 'Auto update'
-//                        font.pixelSize: 19
-//                        font.family: 'Arial'
-//                        anchors.verticalCenter: parent.verticalCenter
-//                    }
-
-//                    Switch {
-//                        id: autoupdate
-//                        padding: 0
-//                        topInset: 0
-//                        bottomInset: 0
-//                        checked: config_auto_update
-//                        anchors.right: parent.right
-//                        anchors.verticalCenter: parent.verticalCenter
-//                        onReleased: { config_auto_update = checked; }
-//                    }
-//                }
-
-//                Row { height: parent.cur_height; width: parent.width;
-//                    Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
-
-//                Row {
-//                    height: parent.cur_height
-//                    width: parent.width
-
-//                    Text {
-//                        text: 'Available updates'
-//                        font.pixelSize: 19
-//                        font.family: 'Arial'
-//                        anchors.verticalCenter: parent.verticalCenter
-//                    }
-
-//                    Button {
-//                        enabled: text == 'No' ? false : true
-//                        height: parent.cur_height
-//                        anchors.verticalCenter: parent.verticalCenter
-//                        anchors.right: parent.right
-
-//                        background: Rectangle { color: 'transparent' }
-
-//                        font.family: 'Arial'
-//                        font.pixelSize: 19
-//                        text: 'No'
-//                        padding: 0
-//                        leftInset: 0
-
-//                        palette.buttonText: pressed ? '#005c84' : hovered ? '#0082B9' : 'black'
-//                    }
-//                }
-
                 Row { height: parent.cur_height; width: parent.width;
                     Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
 
@@ -406,7 +350,7 @@ Popup {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.right: parent.right
 
-                        Component.onCompleted: { text = parser.get_browser_version(); }
+                        //Component.onCompleted: { text = parser.get_browser_version(); }
                     }
                 }
 
@@ -477,6 +421,32 @@ Popup {
                             if (b === 'True') status.value = '   Ok';
                             else status.value = 'Error';
                         }
+                    }
+                }
+
+                Row { height: parent.cur_height; width: parent.width;
+                    Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
+
+                Row {
+                    height: parent.cur_height
+                    width: parent.width
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: 'Scroll delay'
+                        font.pixelSize: 19
+                        font.family: 'Arial'
+                    }
+
+                    TextField {
+                        //id: scroll_delay
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.right: parent.right
+                        font.pixelSize: 19
+                        background: Rectangle {color: 'transparent'}
+                        text: config_scroll_delay
+                        selectionColor: 'white'
+                        validator: RegularExpressionValidator {regularExpression: /[0-9.]+/}
+                        onAccepted: { focus = false; config_scroll_delay = Number(text); }
                     }
                 }
             }
@@ -629,7 +599,7 @@ Popup {
                     }
 
                     Text {
-                        text: 'WebParser v1.5'
+                        text: 'WebParser ' + config_version
                         font.pixelSize: 40
                         font.family: wildwords.name
                         anchors.verticalCenter: parent.verticalCenter
@@ -807,18 +777,19 @@ Popup {
     {
         var json = JSON.parse(String(parser.get_current_config()));
 
-        config_save_folder = json.save_folder;
-        config_path_to_browser = json.path_to_browser;
+        settings_popup.config_save_folder = json['save_folder'];
+        settings_popup.config_path_to_browser = json['path_to_browser'];
 
-        config_auto_update = json.auto_update;
-        config_remember_save_folder = json.remember_save_folder;
-        config_notifications = json.notifications;
+        settings_popup.config_remember_save_folder = json['remember_save_folder'];
+        settings_popup.config_notifications = json['notifications'];
 
-        config_requests_limit = json.request_limit;
-        config_semaphore_limit = json.semaphore_limit;
-        config_download_tries = json.download_tries;
-        
-        config_auto_update = json.auto_update;
+        settings_popup.config_requests_limit = json['requests_limit'];
+        settings_popup.config_semaphore_limit = json['semaphore_limit'];
+        settings_popup.config_download_tries = json['download_tries'];
+
+        settings_popup.config_scroll_delay = json['scroll_delay'];
+
+        settings_popup.config_version = json['version'];
     }
 
     function update_config_file_vars()
@@ -827,14 +798,14 @@ Popup {
             save_folder: config_save_folder,
             path_to_browser: config_path_to_browser,
 
-            auto_update: config_auto_update,
             remember_save_folder: config_remember_save_folder,
             notifications: config_notifications,
 
             requests_limit: config_requests_limit,
             semaphore_limit: config_semaphore_limit,
-            auto_update: config_auto_update,
-            download_tries: config_download_tries
+            download_tries: config_download_tries,
+
+            scroll_delay: config_scroll_delay
         };
 
         var str_config = JSON.stringify(config);

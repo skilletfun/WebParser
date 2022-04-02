@@ -15,6 +15,12 @@ class Worker(QObject):
         self.web_parser = web_parser
         self.parser = None
 
+        self.sites = [
+            'ac.qq.com', 'bomtoon.com', 'comic.naver.com', 'comico.kr', 'fanfox.net', 'kuaikanmanhua.com',
+            'manga.bilibili.com', 'mangakakalots.com', 'mangareader.to', 'manhuadb.com', 'scansnelo.com',
+            'page.kakao.com', 'rawdevart.com', 'ridibooks.com', 'webmota.com (baozihm.com)', 'webtoons.com'
+        ]
+
 
     @pyqtSlot()
     def run(self):
@@ -35,49 +41,17 @@ class Worker(QObject):
             attrs = {'url': url, 'timeout': self.timeout, 'redownload_numbers': self.redownload_numbers,
             'do_archive': self.do_archive, 'do_merge': self.do_merge, 'chapter_count': self.chapter_count}
 
-            if 'manga.bilibili.com' in url:
-                from parsers.manga_bilibili_com import manga_bilibili_com
-                self.parser = manga_bilibili_com(self.web_parser.config)
-            elif 'webtoons.com' in url:
-                from parsers.webtoons_com import webtoons_com
-                self.parser = webtoons_com(self.web_parser.config)
-            elif 'rawdevart.com' in url:
-                from parsers.rawdevart_com import rawdevart_com
-                self.parser = rawdevart_com(self.web_parser.config)
-            elif 'webmota.com' in url or 'baozimh.com' in url:
-                from parsers.webmota_com import webmota_com
-                self.parser = webmota_com(self.web_parser.config)
-            elif 'mangareader.to' in url:
-                from parsers.mangareader_to import mangareader_to
-                self.parser = mangareader_to(self.web_parser.config)
-            elif 'fanfox.net' in url:
-                from parsers.fanfox_net import fanfox_net
-                self.parser = fanfox_net(self.web_parser.config)
-            elif 'manhuadb.com' in url:
-                from parsers.manhuadb import manhuadb_com
-                self.parser = manhuadb_com(self.web_parser.config)
-            elif 'page.kakao.com' in url:
-                from parsers.page_kakao_com import page_kakao_com
-                self.parser = page_kakao_com(self.web_parser.config)
-            elif 'comic.naver.com' in url:
-                from parsers.comic_naver_com import comic_naver_com
-                self.parser = comic_naver_com(self.web_parser.config)
-            elif 'kuaikanmanhua.com' in url:
-                from parsers.kuaikanmanhua_com import kuaikanmanhua_com
-                self.parser = kuaikanmanhua_com(self.web_parser.config)
-            elif 'ac.qq.com' in url:
-                from parsers.ac_qq_com import ac_qq_com
-                self.parser = ac_qq_com(self.web_parser.config)
-            elif 'mangakakalots.com' in url:
-                from parsers.mangakakalots_com import mangakakalots_com
-                self.parser = mangakakalots_com(self.web_parser.config)
-            elif 'scansnelo.com' in url:
-                from parsers.scansnelo_com import scansnelo_com
-                self.parser = scansnelo_com(self.web_parser.config)
-            elif 'comico.kr' in url:
-                from parsers.comico_kr import comico_kr
-                self.parser = comico_kr(self.web_parser.config)
+            for site in self.sites:
+                _site = site.replace('.', '_')
+                if site in url:
+                    exec(f'from parsers.{_site} import {_site}')
+                    exec(f'self.parser = {_site}(self.web_parser.config)')
+                    break
 
-            if not self.parser is None: self.parser.parse(attrs)
+            if not self.parser is None:
+                try:
+                    self.parser.parse(attrs)
+                except Exception as e:
+                    self.web_parser.save_to_log(e)
             time.sleep(1)
         self.running = False

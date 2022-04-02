@@ -1,23 +1,11 @@
 from parsers.basic_parser import basic_parser
 
+
 class page_kakao_com(basic_parser):
     def parse(self, attrs):
         self.update_vars(attrs)
+        browser = self.init_browser(user=True)
 
-        print('Chapter_count in start:', self.chapter_count)
-
-        import time, sys
-        from selenium import webdriver
-        from selenium.webdriver.chrome.options import Options
-
-        options = Options()
-        options.add_argument('--blink-settings=imagesEnabled=false')
-        options.add_argument("--disable-features=VizDisplayCompositor")
-        options.add_argument("--user-data-dir=" + self.config['path_to_browser'])
-
-        ex_path = self.get_chromedriver_path()
-
-        browser = webdriver.Chrome(chrome_options=options, executable_path=ex_path)
         browser.minimize_window()
 
         old_title = ''
@@ -29,7 +17,7 @@ class page_kakao_com(basic_parser):
             browser.get(self.url)
 
             while True:
-                check = browser.execute_script('return document.getElementsByClassName(\'css-88gyaf\')[0];')
+                check = browser.execute_script("return document.getElementsByClassName('css-88gyaf')[0];")
 
                 if check is None:
                     time.sleep(1)
@@ -48,17 +36,9 @@ class page_kakao_com(basic_parser):
                 self.full_download(images, title)
 
                 if self.chapter_count > 0:
-                    try:
-                        old_title = title
-                        browser.execute_script('document.getElementsByClassName(\'linkItem\')[3].click();')
-                        self.save_folder = self.true_save_folder
-                        max_wait = 10
-
-                        while title == old_title and max_wait > 0:
-                            title = browser.execute_script('return document.getElementsByClassName(\'titleWrap\')[0].children[0].textContent;')
-                            max_wait -= 1
-                            time.sleep(1)
-                    finally: pass
+                    s_next = "document.getElementsByClassName('linkItem')[3].click();"
+                    s_title = "return document.getElementsByClassName('titleWrap')[0].children[0].textContent;"
+                    self.try_next_chapter(browser, s_next, title, s_title)
                 else: break
         finally:
             browser.close()

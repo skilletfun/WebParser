@@ -1,5 +1,6 @@
 from parsers.basic_parser import basic_parser
 
+
 class webmota_com(basic_parser):
     def parse(self, attrs):
         self.update_vars(attrs)

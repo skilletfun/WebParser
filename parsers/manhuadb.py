@@ -1,6 +1,5 @@
-import requests, os
-from bs4 import BeautifulSoup as bs
 from parsers.basic_parser import basic_parser
+
 
 class manhuadb_com(basic_parser):
     def parse(self, attrs):

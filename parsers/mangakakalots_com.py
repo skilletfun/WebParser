@@ -1,7 +1,6 @@
 from parsers.basic_parser import basic_parser
-import time
-from bs4 import BeautifulSoup as bs
-# https://ww2.mangakakalots.com/chapter/manga-bx978832/chapter-2
+
+
 class mangakakalots_com(basic_parser):
     def parse(self, attrs):
         self.update_vars(attrs)

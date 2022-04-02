@@ -3,6 +3,7 @@ from PyQt5.QtCore import pyqtSlot, QObject, QThread
 import json
 import os
 import subprocess
+import traceback
 from datetime import datetime
 from Worker import Worker
 
@@ -12,11 +13,9 @@ class Web_parser(QObject):
 
     my_thread = None
     worker = None
-
-    old_stdout = None
-    log_file = None
-
     notifier = None
+
+    log_file = None
 
     # Config
     config = {
@@ -27,34 +26,28 @@ class Web_parser(QObject):
         'requests_limit': 100,
         'semaphore_limit': 200,
         'download_tries': 5,
-#        'auto_update': False,
-#        'version': 'v1.5'
+        'scroll_delay': 0.2,
+        'version': 'v1.6'
     }
-
 
     def __init__(self):
         """ Init: create log file, redirect all print to log file, load config. """
         
         super(Web_parser, self).__init__()
 
-        self.old_stdout = sys.stdout
+        # Prepare logs
         if not os.path.exists('logs'):
             os.mkdir('logs')
-
         time_now = str(datetime.now()).replace(' ', '_').replace(':', '_')[:-7]
         self.log_file = f'logs/{time_now}.txt'
 
-        self.save_to_log('Init WebParser')
-
+        # Notifier
         if not sys.platform.startswith("linux"):
             self.countOfDeletedSymbols = 8
-            self.save_to_log('Init Notifier...')
             import win10toast
             self.notifier = win10toast.ToastNotifier()
 
-
-        self.save_to_log('Open "config.json"...')
-
+        # Load config
         try:
             if os.path.exists('config.json'):
                 with open('config.json', 'r') as f:
@@ -62,18 +55,13 @@ class Web_parser(QObject):
                     self.config.update(file)
 
             self.update_config_file()
-            self.save_to_log('"Config.json" had been loaded')
         except Exception as e:
             self.save_to_log('Error while load "config.json"')
             self.save_to_log(e)
-        self.save_to_log('Init WebParser complete')
-
 
     @pyqtSlot(str, int, str, str, bool, bool, str)
     def parse(self, url, timeout, save_folder, redownload_numbers, do_archive, do_merge, chapter_count):
         """ Main function. Parsing. """
-    
-        self.save_to_log('Start parsing...')
         
         # Check given save_folder. Change it in 'config.json' if needed
         if save_folder != '':
@@ -89,37 +77,27 @@ class Web_parser(QObject):
         self.worker.moveToThread(self.my_thread)
         self.my_thread.start()
 
-
     @pyqtSlot(result=str)
     def get_current_config(self):
         """ Return current config in string. """
-    
-        return json.dumps(self.config)
 
+        return json.dumps(self.config)
 
     @pyqtSlot()
     @pyqtSlot(str)
     def update_config_file(self, config=None):
         """ Update 'config.json'. Rewrite file. """
-    
-        self.save_to_log('Update "config.json"')
-        try:
-            if not config is None:
-                self.save_to_log('JSON: ' + config)
-                config = json.loads(config)
-                self.config.update(config)
-            with open('config.json', 'w') as f:
-                json.dump(self.config, f)
-        except Exception as e:
-            self.save_to_log('Error while update "config.json"')
-            self.save_to_log(e)
 
+        if not config is None:
+            config = json.loads(config)
+            self.config.update(config)
+        with open('config.json', 'w') as f:
+            json.dump(self.config, f)
 
     @pyqtSlot(result=str)
     def check_driver(self):
         """ Check the accuracy of setted up chromedriver. """
-    
-        self.save_to_log('Check driver')
+
         res = ''
         try:
             from selenium import webdriver
@@ -143,50 +121,41 @@ class Web_parser(QObject):
             if res == '': return 'False'
             else: return res
 
-
     @pyqtSlot()
     def cancel_download(self):
         """ Close the thread. Can be used for cancel downloading. """
-    
-        self.save_to_log('Cancel download / Finish download')
-        self.my_thread.quit()
 
+        self.my_thread.requestInterruption()
 
     @pyqtSlot(result=int)
     def get_total_images(self):
         """ Return the number of total images in chapter. """
-    
-        total_images = 0
+
         try:
             total_images = self.worker.parser.total_images
         except:
-            pass
+            total_images = 0
         return total_images
-
 
     @pyqtSlot(result=int)
     def get_total_download_images(self):
         """ Return the number of images that just downloaded. """
-    
-        total_download_images = 0
+
         try:
             total_download_images = self.worker.parser.total_download_images
         except:
-            pass
+            total_download_images = 0
         return total_download_images
-
 
     @pyqtSlot(result=str)
     def get_current_title(self):
         """ Return the title of current downloaded chapter. """
-    
-        current_title = ''
+
         try:
             current_title = self.worker.parser.current_title
         except:
-            pass
+            current_title = ''
         return current_title
-
 
     @pyqtSlot(result=str)
     def get_running(self):
@@ -206,12 +175,9 @@ class Web_parser(QObject):
                 os.system('notify-send "Downloading all chapters complete" "WebParser"')
         return str(running)
 
-
     @pyqtSlot(result=str)
     def get_browser_version(self):
         """ Return version of Google Chrome or Chromium. """
-    
-        self.save_to_log('Try to get version of browser')
         
         # Windows
         if not sys.platform.startswith("linux"):
@@ -219,7 +185,7 @@ class Web_parser(QObject):
                 arr = os.popen('reg query HKCU\\Software\\Google\\Chrome\\BLBeacon').read().split()
                 i = arr.index('version')
             except Exception as e:
-                self.save_to_log(e)
+                # self.save_to_log(e)
                 arr = os.popen('reg query HKCU\\Software\\Chromium\\BLBeacon').read().split()
                 i = arr.index('version')
             version = arr[i + 2]
@@ -231,84 +197,58 @@ class Web_parser(QObject):
                 res = subprocess.check_output(['google-chrome', '--version'])
             
             version = res.decode('utf-8').split()[1]
-
-        self.save_to_log('Version of your browser: ' + version)
         return version
-
 
     @pyqtSlot()
     def download_chromedriver(self):
-        """ Download correct chromedriver. """
-    
-        self.save_to_log('Try download chromedriver...')
-        try:
-            import requests as r
-            from patoolib import extract_archive
+        """ Download correct chromedriver. If current version exists at site. """
 
-            version = self.get_browser_version()
-            url = f'https://chromedriver.storage.googleapis.com/{version}/chromedriver_win32.zip'
-            res = r.get(url, stream=True)
-            name = 'chromedriver'
+        import requests as r
+        from patoolib import extract_archive
 
-            with open(f'{name}.zip', 'wb') as fd:
-                for chunk in res.iter_content(chunk_size=128):
-                    fd.write(chunk)
+        version = self.get_browser_version()
+        url = f'https://chromedriver.storage.googleapis.com/{version}/chromedriver_win32.zip'
+        res = r.get(url, stream=True)
+        name = 'chromedriver'
 
-            extract_archive(f'{name}.zip')
-            os.remove(f'{name}.zip')
-            self.save_to_log('Downloading complete')
-        except Exception as e:
-            self.save_to_log('Error while downloading')
-            self.save_to_log(e)
+        with open(f'{name}.zip', 'wb') as fd:
+            for chunk in res.iter_content(chunk_size=128):
+                fd.write(chunk)
 
+        extract_archive(f'{name}.zip')
+        os.remove(f'{name}.zip')
 
     @pyqtSlot(str)
     def save_to_log(self, log):
         """ Save information to log-file. """
 
         with open(self.log_file, 'a') as f:
-            f.write('Log: ' + log + '\n')
-
+            f.write('Log: ' + log + '\n\n')
 
     @pyqtSlot()
     def show_log(self):
         """ Open log-file (in Windows basic app (Notepad)). """
-    
-        self.save_to_log('Open last log...')
-        try:
-            l_dir = os.listdir('logs')
-            l_dir.sort()
-            
-            if 'log.txt' in l_dir:
-                l_dir.remove('log.txt')
-            
-            last_log = l_dir[-1]
-            
-            self.save_to_log('Last log: ' + last_log)
 
-            if not sys.platform.startswith("linux"):
-                # Windows
-                os.startfile(os.path.normpath(f'logs/{last_log}'))   
-            else:
-                # Linux
-                subprocess.call(['xdg-open', f'logs/{last_log}']) 
-        except Exception as e:
-            self.save_to_log('Error while open "log_last.txt"')
-            self.save_to_log(e)
+        l_dir = os.listdir('logs')
+        l_dir.sort()
 
+        last_log = l_dir[-1]
+
+        if not sys.platform.startswith("linux"):
+            # Windows
+            os.startfile(os.path.normpath(f'logs/{last_log}'))
+        else:
+            # Linux
+            subprocess.call(['xdg-open', f'logs/{last_log}'])
 
     @pyqtSlot()
     def get_the_help(self):
         """ Show 'help.pdf'. """
-    
-        self.save_to_log('Open "help.pdf"...')
-        try:            
-            if not sys.platform.startswith("linux"):
-                # Windows
-                os.startfile(os.path.normpath('res/help.pdf'))
-            else:
-                # Linux
-                subprocess.call(['xdg-open', 'res/help.pdf'])
-        except Exception as e:
-            self.save_to_log('Error while open "help.pdf"')
-            self.save_to_log(e)
+
+        if not sys.platform.startswith("linux"):
+            # Windows
+            os.startfile(os.path.normpath('res/help.pdf'))
+        else:
+            # Linux
+            subprocess.call(['xdg-open', 'res/help.pdf'])
+

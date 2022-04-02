@@ -1,5 +1,5 @@
 from parsers.basic_parser import basic_parser
-import requests
+
 
 class comic_naver_com(basic_parser):
     def parse(self, attrs):

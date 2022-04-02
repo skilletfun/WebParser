@@ -1,21 +1,10 @@
 from parsers.basic_parser import basic_parser
 
+
 class fanfox_net(basic_parser):
     def parse(self, attrs):
         self.update_vars(attrs)
-
-        from selenium import webdriver
-        from selenium.webdriver.chrome.options import Options
-        import time, sys
-
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--disable-features=VizDisplayCompositor")
-        options.add_argument("window-size=900,600")
-
-        ex_path = self.get_chromedriver_path()
-
-        browser = webdriver.Chrome(chrome_options=options, executable_path=ex_path)
+        browser = self.init_browser(headless=True)
 
         try:
             while self.url != 'https://fanfox.net':

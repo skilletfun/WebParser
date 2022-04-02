@@ -1,4 +1,4 @@
-import QtQuick 2.15
+﻿import QtQuick 2.15
 import QtQuick.Controls 2.15
 
 Rectangle {
@@ -8,7 +8,7 @@ Rectangle {
     Text {
         id: title
 
-        text: 'WebParser v1.5'
+        text: 'WebParser v1.6'
         font.pixelSize: 32
         font.bold: true
         font.family: 'Arial'
@@ -37,7 +37,7 @@ Rectangle {
     Text {
         id: help_title
 
-        text: 'Support 14 sites'
+        text: 'Support 16 sites'
         font.pixelSize: 16
         font.family: 'Arial'
 
@@ -131,9 +131,10 @@ Rectangle {
             id: model_sites
 
             Component.onCompleted: {
-                var arr = ['© ac.qq.com', 'comic.naver.com', '© comico.kr (+ paid)', '© fanfox.net',
+                var arr = ['© ac.qq.com', '© bomtoon.com (+ paid)', 'comic.naver.com', '© comico.kr (+ paid)', '© fanfox.net',
                            '© kuaikanmanhua.com', '© manga.bilibili.com', 'mangakakalots.com', '© mangareader.to',
-                           'manhuadb.com', 'scansnelo.com', '© page.kakao.com (+ paid)', 'rawdevart.com', 'webmota.com (baozihm.com)', 'webtoons.com'];
+                           'manhuadb.com', 'scansnelo.com', '© page.kakao.com (+ paid)', 'rawdevart.com', '© ridibooks.com (+ paid)',
+			               'webmota.com (baozihm.com)', 'webtoons.com'];
                 arr.forEach(function(el){ append({ '_text': el }); });
             }
         }

@@ -1,12 +1,17 @@
+import time
+import sys
 import requests
 import os
-from bs4 import BeautifulSoup as bs
-
 import asyncio
 import aiohttp
 import aiofiles
-
+from bs4 import BeautifulSoup as bs
 from PyQt5.QtCore import QObject, pyqtSignal
+from parsers.basic_parser import basic_parser
+from seleniumwire import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+
 
 class basic_parser(QObject):
     url = None
@@ -33,6 +38,28 @@ class basic_parser(QObject):
         
         if not config['remember_save_folder']: self.save_folder = ''
         else: self.save_folder = config['save_folder']
+
+
+    def init_browser(self, *, user=False, headless=False, disable_images=False):
+        """ Init webdriver. Base for many parsers. """
+        options = Options()
+        options.add_argument("--disable-features=VizDisplayCompositor")
+        options.add_argument('--disable-extensions')
+
+        if user:
+            options.add_argument("--user-data-dir=" + self.config['path_to_browser'])
+
+        if sys.platform.startswith('linux'):
+            options.add_argument('--password-store=gnome')
+
+        if headless:
+            options.add_argument("--headless")
+
+        if disable_images:
+            options.add_argument('--blink-settings=imagesEnabled=false')
+
+        ex_path = self.get_chromedriver_path()
+        return webdriver.Chrome(chrome_options=options, executable_path=ex_path)
 
 
     def update_vars(self, attrs):
@@ -69,15 +96,13 @@ class basic_parser(QObject):
                 status = img.status
                 tries -= 1
             except Exception as e:
-                print('Exception:', e)
-                connector = await aiohttp.TCPConnector(force_close=True)
-                session = await aiohttp.ClientSession(connector=connector)
-                await asyncio.sleep(1)
+                print(e)
 
         if status == 200:
             f = await aiofiles.open(os.path.join(save_folder, name + '.jpg'), mode="wb")
             await f.write(await img.read())
             await f.close()
+            img.close()
             self.total_download_images += 1
 
 
@@ -141,15 +166,15 @@ class basic_parser(QObject):
         return [images[i] for i in numbers]
 
 
-    def download_images(self, images, save_folder, url, timeout, _headers=None, name_of_files=''):
+    def download_images(self, images, name_of_files, _headers=None, start_counter=0):
         """ Download images by urls. Start async function. """
-    
-        asyncio.run(self.t_download_images(images, save_folder, url, timeout, _headers, name_of_files))
+
+        asyncio.run(self.t_download_images(images, name_of_files, _headers, start_counter=start_counter))
 
 
-    async def t_download_images(self, images, save_folder, url, timeout, _headers=None, name_of_files=''):
+    async def t_download_images(self, images, name_of_files, _headers=None, start_counter=0):
         """ Download images by urls. """
-    
+
         if _headers is None:
             _headers = {
                 "Accept": "image/webp,*/*",
@@ -158,22 +183,17 @@ class basic_parser(QObject):
                 "Connection": "keep-alive",
                 'Host': '',
                 "DNT": "1",
-                "Referer": url,
+                "Referer": self.url,
                 "Sec-GPC": "1",
-                "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
             }
 
-        if name_of_files == '':
-            name_of_files = [el + 1 for el in range(len(images))]
-        else:
-            name_of_files = name_of_files.split()
-
-        i = 0
+        i = start_counter
         tasks = []
 
-        sem = asyncio.Semaphore(self.config['semaphore_limit'] + int(timeout) * 1000)
+        sem = asyncio.Semaphore(self.config['semaphore_limit'] + int(self.timeout) * 1000)
         async with sem:
-            connector = aiohttp.TCPConnector(force_close=True, limit=self.config['requests_limit'])
+            connector = aiohttp.TCPConnector(force_close=True)
             async with aiohttp.ClientSession(connector=connector) as session:
                 for img_url in images:
                     temp_url = img_url
@@ -182,10 +202,12 @@ class basic_parser(QObject):
                         _headers['Host'] = temp_url.replace('http://', '').replace('https://', '').split('/')[0]
 
                     task = asyncio.create_task(
-                        self.download(session, img_url, _headers, str(name_of_files[i]), save_folder))
+                        self.download(session, img_url, _headers, str(name_of_files[i]), self.save_folder))
                     tasks.append(task)
                     i += 1
+
                 await asyncio.gather(*tasks)
+            await session.close()
 
 
     def check_all_checkboxes(self, title):
@@ -207,9 +229,20 @@ class basic_parser(QObject):
 
         if self.redownload_numbers != '':
             images = self.rebuild_redownload_images(self.redownload_numbers, images)
+            name_of_files = self.redownload_numbers.split()
+        else:
+            name_of_files = range(1, len(images)+1)
 
         self.save_folder = self.prepare_save_folder(title)
-        self.download_images(images, self.save_folder, self.url, self.timeout, name_of_files=self.redownload_numbers)
+
+        step = self.config['requests_limit']
+        for i in range(0, len(images), step):
+            try:
+                imgs = images[i : i + step]
+                self.download_images(imgs, name_of_files, start_counter=i)
+            except Exception as e:
+                print(e)
+
         self.check_all_checkboxes(title)
 
 
@@ -273,11 +306,47 @@ class basic_parser(QObject):
 
     def get_chromedriver_path(self):
         """ Return path to chromedriver. """
-    
-        import sys
 
         if not sys.platform.startswith("linux"):
             ex_path = 'chromedriver.exe'
         else:
             ex_path = 'chromedriver'
         return ex_path
+
+
+    def save_images_from_bytes(self, list_bytes, title, names=None):
+        """ Save images from bytes (from browser's requests). """
+        self.current_title = title
+        self.total_images = len(list_bytes)
+        self.total_download_images = 0
+
+        if names is None:
+            names = range(1, len(list_bytes) + 1)
+
+        self.save_folder = self.prepare_save_folder(title)
+
+        for name, img in zip(names, list_bytes):
+            with open(os.path.join(self.save_folder, str(name) + '.jpg'), mode="wb") as f:
+                f.write(img)
+                f.close()
+                self.total_download_images += 1
+
+
+    def try_next_chapter(self, browser, script_next_chapter, title, script_title=None):
+        """ Check existing next chapters if should download it. """
+        try:
+            old_title = title
+            browser.execute_script(script_next_chapter)
+            self.save_folder = self.true_save_folder
+            max_wait = 10
+
+            while title == old_title and max_wait > 0:
+                if not script_title:
+                    title = browser.execute_script(script_title)
+                else:
+                    title = browser.title
+
+                max_wait -= 1
+                time.sleep(1)
+        except Exception as e:
+            print(e)
