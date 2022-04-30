@@ -10,8 +10,6 @@ from PyQt5.QtCore import QThread
 from asyncqt import QEventLoop
 import asyncio
 
-# pyinstaller main.py --icon=icon.ico --noconsole
-
 """ Define necessary variables. """
 
 ORGANIZATION_NAME = 'SkilletfunINC'
@@ -36,39 +34,6 @@ if __name__ == "__main__":
     app.setWindowIcon(QIcon('res/icon.png'))
 
     web = Web_parser()
-    
-#    """ If autoupdate is enabled -> """
-#    if web.config['auto_update']:
-#        import requests
-#        import subprocess
-#        import sys
-#
-#        
-#        url = requests.get('https://github.com/skilletfun/WebParser/releases/latest')
-#        filename = 'update.zip'
-#        
-#        tag = url.url.split('/')[-1]
-#        
-#        """ If tags not equals. """
-#        if not tag == web.config['version']:
-#            base_url = 'https://github.com/skilletfun/WebParser/releases/download/'
-#            
-#            f = requests.get(base_url+tag+'/'+filename, stream=True)
-#            
-#            with open(filename, 'wb') as fd:
-#                for chunk in f.iter_content(chunk_size=128):
-#                    fd.write(chunk)
-#        
-#            web.config['version'] = tag
-#            web.update_config_file()
-#            
-#            if not sys.platform.startswith("linux"):
-#                theproc = subprocess.Popen('updater.exe')
-#                theproc.communicate()
-#            else:
-#                theproc = subprocess.Popen('python3 updater.py &', shell=True)
-#                theproc.communicate()
-#            sys.exit()
 
     ctx.setContextProperty("parser", web)
 
