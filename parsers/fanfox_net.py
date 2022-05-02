@@ -1,47 +1,46 @@
 from parsers.basic_parser import basic_parser
-
+import time
 
 class fanfox_net(basic_parser):
+    @basic_parser.logging
     def parse(self, attrs):
         self.update_vars(attrs)
-        browser = self.init_browser(headless=True)
+        self.browser = self.init_browser(headless=True)
 
-        try:
-            while self.url != 'https://fanfox.net':
-                self.chapter_count -= self.step
-                images = []
-                browser.get(self.url)
+        while self.attrs['url'] != 'https://fanfox.net':
+            self.attrs['chapter_count'] -= self.attrs['step']
+            images = []
+            self.browser.get(self.attrs['url'])
 
-                time.sleep(5)
+            time.sleep(5)
 
-                image = browser.find_element_by_xpath('/html/body/div[7]/img')
-                n = int(browser.execute_script('return imagecount'))
+            image = self.browser.find_element_by_xpath('/html/body/div[7]/img')
+            n = int(self.browser.execute_script('return imagecount'))
+            title = self.browser.execute_script('return document.title')
+            url_img = image.get_attribute('src')
+            url = url_img.split('?')[0]
 
-                title = browser.execute_script('return document.title')
+            if url[-9] == '/':
+                left_url = url[:-7]
+                num = '000'
+            else:
+                pos = url.rfind('_') + 1
+                left_url = url[:pos]
+                num = str(url[pos:-4])
 
-                url_img = image.get_attribute('src')
+            for _ in range(n + 1):
+                if len(num) < 3:
+                    num = (3 - len(num)) * '0' + num
 
-                url = url_img.split('?')[0]
+                images.append(left_url + num + '.jpg')
+                num = str(int(num) + 1)
 
-                if url[-9] == '/':
-                    left_url = url[:-7]
-                    num = '000'
-                else:
-                    pos = url.rfind('_') + 1
-                    left_url = url[:pos]
-                    num = str(url[pos:-4])
+            self.full_download(images, title)
 
-                for _ in range(n + 1):
-                    if len(num) < 3:
-                        num = (3 - len(num)) * '0' + num
-
-                    images.append(left_url + num + '.jpg')
-                    num = str(int(num) + 1)
-
-                self.full_download(images, title)
-
-                if self.chapter_count > 0:
-                    self.url = 'https://fanfox.net' + browser.execute_script('return nextchapterurl')
-                    self.save_folder = self.true_save_folder
-                else: break
-        finally: browser.close()
+            if self.attrs['chapter_count'] > 0:
+                self.attrs['url'] = 'https://fanfox.net' + self.browser.execute_script('return nextchapterurl')
+                self.save_folder = self.true_save_folder
+            else: break
+        self.browser.close()
+        self.browser.quit()
+        return True
