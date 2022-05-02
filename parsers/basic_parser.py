@@ -18,10 +18,10 @@ class basic_parser(QObject):
         super(basic_parser, self).__init__()
         self.config = config
         self.log_file = log_file
-        self.timeout = None
-        self.save_folder = None
-        self.redownload_numbers = None
         self.browser = None
+        self.save_folder = None
+        # self.timeout = None
+        # self.redownload_numbers = None
 
         # Statistic for QML
         self.total_images = 0

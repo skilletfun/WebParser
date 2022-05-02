@@ -20,7 +20,7 @@ class Worker(QObject):
             'fanfox.net',
             'kuaikanmanhua.com',
             'manga.bilibili.com',
-            'mangakakalots.com',
+            'mangakakalot.com',
             'mangareader.to',
             'manhuadb.com',
             'scansnelo.com',
