@@ -77,6 +77,10 @@ class Web_parser(QObject):
     def get_current_config(self):
         return json.dumps(self.config)
 
+    @pyqtSlot(result=str)
+    def get_version(self):
+        return self.config['version']
+
     @pyqtSlot()
     @pyqtSlot(str)
     def update_config_file(self, config=None):

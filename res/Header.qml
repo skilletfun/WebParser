@@ -8,7 +8,7 @@ Rectangle {
     Text {
         id: title
 
-        text: 'WebParser v1.6'
+        text: 'WebParser ' + parser.get_version()
         font.pixelSize: 32
         font.bold: true
         font.family: 'Arial'
