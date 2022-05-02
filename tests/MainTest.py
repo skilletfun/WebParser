@@ -11,6 +11,10 @@ from tests.test_kuaikanmanhua import KuaikanmanhuaTest
 from tests.test_mangareader import MangareaderTest
 from tests.test_ridibooks import RidibooksTest
 from tests.test_kakao import KakaoTest
+from tests.test_scansnelo import ScansneloTest
+from tests.test_webmota import WebmotaTest
+from tests.test_rawdevart import RawdevartTest
+from tests.test_manhuadb import ManhuadbTest
 
 
 if __name__ == '__main__':
@@ -27,6 +31,11 @@ if __name__ == '__main__':
     # tester.addTest(makeSuite(MangareaderTest))        # Completed
     # tester.addTest(makeSuite(RidibooksTest))          # Completed
     # tester.addTest(makeSuite(KakaoTest))              # Completed
+    # tester.addTest(makeSuite(ScansneloTest))          # Completed
+    # tester.addTest(makeSuite(WebmotaTest))            # Completed
+    # tester.addTest(makeSuite(RawdevartTest))          # Completed
+    tester.addTest(makeSuite(ManhuadbTest))           # Completed
+
 
     runner = TextTestRunner(verbosity=2)
     runner.run(tester)
