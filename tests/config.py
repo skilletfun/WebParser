@@ -3,7 +3,7 @@ config = {
     "remember_save_folder": True,
     "path_to_browser": "C:/Users/Sergey/AppData/Local/Chromium/User Data",
     "notifications": True,
-    "requests_limit": 100,
+    "requests_limit": 50,
     "semaphore_limit": 200,
     "download_tries": 10,
     "scroll_delay": 0.15,
