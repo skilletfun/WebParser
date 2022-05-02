@@ -74,10 +74,13 @@ class basic_parser(QObject):
         return webdriver.Chrome(chrome_options=options, executable_path=ex_path)
 
     def quit_browser(self):
-        if self.browser:
+        try:
             self.browser.execute_script('window.stop();')
             self.browser.close()
             self.browser.quit()
+            self.browser = None
+        except:
+            pass
 
     @logging
     def update_vars(self, attrs):

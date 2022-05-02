@@ -124,12 +124,12 @@ class Web_parser(QObject):
 
     @pyqtSlot()
     def cancel_download(self):
-        try:
+        if self.worker:
+            self.my_thread.terminate()
+            self.my_thread.quit()
+            self.my_thread = None
             self.worker.parser.quit_browser()
-            del self.worker
-            self.my_thread.exit(0)
-        except Exception as e:
-            print(e)
+            self.worker = None
 
     @pyqtSlot(result=int)
     def get_total_images(self):
