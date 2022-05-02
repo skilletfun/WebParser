@@ -1,26 +1,27 @@
 from parsers.basic_parser import basic_parser
 import time
 from bs4 import BeautifulSoup as bs
+import requests
+
 
 class manhuadb_com(basic_parser):
+    @basic_parser.logging
     def parse(self, attrs):
         self.update_vars(attrs)
-        true_url = self.url
-        soup = self.download_func(self.url)
-        self.chapter_count -= 1
+        true_url = self.attrs['url']
+        soup = self.download_func(self.attrs['url'])
+        self.attrs['chapter_count'] -= 1
 
-        while self.chapter_count > 0:
-            self.chapter_count -= self.step
+        while self.attrs['chapter_count'] > 0:
+            self.attrs['chapter_count'] -= self.attrs['step']
             chapters_urls = soup.find('ol', {'class': 'links-of-books'}).find_all('a')
-            l = len(chapters_urls)
+            length = len(chapters_urls)
 
-            for i in range(l):
-                if chapters_urls[i].get('href') in true_url:
-                    if not i + 1 >= l:
-                        chapters_urls = ['https://www.manhuadb.com' + el.get('href') for el in chapters_urls[i + 1:]]
-                        for url in chapters_urls:
-                            self.download_func(url)
-
+            for i in range(length):
+                if chapters_urls[i].get('href') in true_url and i+1 < length:
+                    chapters_urls = ['https://www.manhuadb.com' + el.get('href') for el in chapters_urls[i + 1:]]
+                    for url in chapters_urls:
+                        self.download_func(url)
 
     def download_func(self, url):
         images = []
