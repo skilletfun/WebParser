@@ -326,6 +326,7 @@ class basic_parser(QObject):
         browser.execute_script(script_next_chapter)
         self.save_folder = self.true_save_folder
         max_wait = 10
+        time.sleep(5)
 
         while title == old_title and max_wait > 0:
             if not script_title is None:
