@@ -20,8 +20,6 @@ class basic_parser(QObject):
         self.log_file = log_file
         self.browser = None
         self.save_folder = None
-        # self.timeout = None
-        # self.redownload_numbers = None
 
         # Statistic for QML
         self.total_images = 0
@@ -46,7 +44,7 @@ class basic_parser(QObject):
         return wrapper
 
     @logging
-    def init_browser(self, *, user=False, headless=False, disable_images=False):
+    def init_browser(self, *, user=False, headless=False, disable_images=False, full_load=True):
         """ Init webdriver. Basement for many parsers. """
         options = Options()
         options.add_argument("--disable-features=VizDisplayCompositor")
@@ -65,6 +63,13 @@ class basic_parser(QObject):
             options.add_argument('--blink-settings=imagesEnabled=false')
 
         ex_path = self.get_chromedriver_path()
+        if not full_load:
+            from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+            from selenium.webdriver.support.ui import WebDriverWait
+            from selenium.webdriver.support import expected_conditions as EC
+            capa = DesiredCapabilities.CHROME
+            capa["pageLoadStrategy"] = "none"
+            return webdriver.Chrome(chrome_options=options, executable_path=ex_path, desired_capabilities=capa)
         return webdriver.Chrome(chrome_options=options, executable_path=ex_path)
 
     def quit_browser(self):
@@ -159,12 +164,17 @@ class basic_parser(QObject):
         return [images[i] for i in numbers]
 
     @logging
-    def download_images(self, images, name_of_files, _headers=None, start_counter=0):
+    def download_images(self, images, name_of_files, _headers=None):
         """ Download images by urls. Start async function. """
-        asyncio.run(self.t_download_images(images, name_of_files, _headers, start_counter=start_counter))
+        try:
+            limit = self.config['requests_limit']
+            for step in range(0, len(images), limit):
+                asyncio.run(self.t_download_images(images[step:step+limit], name_of_files[step:step+limit], _headers))
+        except Exception:
+            pass
 
     @logging
-    async def t_download_images(self, images, name_of_files, _headers=None, start_counter=0):
+    async def t_download_images(self, images, name_of_files, _headers=None):
         """ Download images by urls. """
         if _headers is None:
             _headers = {
@@ -179,9 +189,8 @@ class basic_parser(QObject):
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
             }
 
-        i = start_counter
+        i = 0
         tasks = []
-
         sem = asyncio.Semaphore(self.config['semaphore_limit'] + int(self.attrs['timeout']) * 1000)
         async with sem:
             connector = aiohttp.TCPConnector(force_close=True)
@@ -222,12 +231,7 @@ class basic_parser(QObject):
             name_of_files = range(1, len(images)+1)
 
         self.prepare_save_folder()
-
-        step = self.config['requests_limit']
-        for i in range(0, len(images), step):
-            imgs = images[i : i + step]
-            self.download_images(imgs, name_of_files, start_counter=i)
-
+        self.download_images(images, name_of_files)
         self.check_all_checkboxes()
 
     @logging
