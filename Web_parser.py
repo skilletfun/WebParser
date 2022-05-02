@@ -74,7 +74,7 @@ class Web_parser(QObject):
             self.my_thread.started.connect(self.worker.run)
             self.worker.moveToThread(self.my_thread)
             self.my_thread.start()
-        except Exception as e:
+        except Exception:
             import traceback
             with open(self.log_file, 'a') as file:
                 traceback.print_exc(file=file)
@@ -126,11 +126,10 @@ class Web_parser(QObject):
     def cancel_download(self):
         try:
             self.worker.parser.quit_browser()
-            self.my_thread.terminate()
-            self.my_thread.quit()
-            self.my_thread = None
-        except:
-            pass
+            del self.worker
+            self.my_thread.exit(0)
+        except Exception as e:
+            print(e)
 
     @pyqtSlot(result=int)
     def get_total_images(self):
