@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     # tester.addTest(makeSuite(WebtoonsTest))           # Completed
     # tester.addTest(makeSuite(AcqqcomTest))            # Completed
-    tester.addTest(makeSuite(BomtoonTest))
+    # tester.addTest(makeSuite(BomtoonTest))            # Completed
     # tester.addTest(makeSuite(NaverTest))              # Completed
     # tester.addTest(makeSuite(ComicoTest))             # Completed
     # tester.addTest(makeSuite(FanfoxTest))             # Completed
