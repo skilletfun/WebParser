@@ -5,6 +5,7 @@ import os
 import subprocess
 from datetime import datetime
 from Worker import Worker
+from parsers.basic_parser import basic_parser
 
 
 class Web_parser(QObject):
@@ -50,28 +51,33 @@ class Web_parser(QObject):
 
     @pyqtSlot(str, int, str, str, bool, bool, str)
     def parse(self, url, timeout, save_folder, redownload_numbers, do_archive, do_merge, chapter_count):
-        # Check given save_folder. Change it in 'config.json' if needed
-        if save_folder != '':
-            self.config['save_folder'] = save_folder[self.SYMBOLS_FOR_DELETE:]
-            self.update_config_file()
+        try:
+            # Check given save_folder. Change it in 'config.json' if needed
+            if save_folder != '':
+                self.config['save_folder'] = save_folder[self.SYMBOLS_FOR_DELETE:]
+                self.update_config_file()
 
-        self.notify_flag = True
+            self.notify_flag = True
 
-        attrs = {
-            'url': url,
-            'timeout': timeout,
-            'redownload_numbers': redownload_numbers,
-            'do_archive': do_archive,
-            'do_merge': do_merge,
-            'chapter_count': chapter_count
-        }
+            attrs = {
+                'url': url,
+                'timeout': timeout,
+                'redownload_numbers': redownload_numbers,
+                'do_archive': do_archive,
+                'do_merge': do_merge,
+                'chapter_count': chapter_count
+            }
 
-        # Start new thread to prevent freeze gui
-        self.my_thread = QThread()
-        self.worker = Worker(attrs, self)
-        self.my_thread.started.connect(self.worker.run)
-        self.worker.moveToThread(self.my_thread)
-        self.my_thread.start()
+            # Start new thread to prevent freeze gui
+            self.my_thread = QThread()
+            self.worker = Worker(attrs, self)
+            self.my_thread.started.connect(self.worker.run)
+            self.worker.moveToThread(self.my_thread)
+            self.my_thread.start()
+        except Exception as e:
+            import traceback
+            with open(self.log_file, 'a') as file:
+                traceback.print_exc(file=file)
 
     @pyqtSlot(result=str)
     def get_current_config(self):

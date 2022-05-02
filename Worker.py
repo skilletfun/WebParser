@@ -33,32 +33,37 @@ class Worker(QObject):
 
     @pyqtSlot()
     def run(self):
-        self.running = True
-        if self.attrs['url'].startswith('file://'):
-            self.attrs['url'] = self.attrs['url'][self.SYMBOLS_FOR_DELETE:]
+        try:
+            self.running = True
+            if self.attrs['url'].startswith('file://'):
+                self.attrs['url'] = self.attrs['url'][self.SYMBOLS_FOR_DELETE:]
 
-            with open(self.attrs['url'], "r") as f:
-                urls = f.read().split('\n')
-                if urls[-1] == '\n' or urls[-1] == '': urls.pop()
-        else:
-            urls = [self.attrs['url']]
+                with open(self.attrs['url'], "r") as f:
+                    urls = f.read().split('\n')
+                    if urls[-1] == '\n' or urls[-1] == '': urls.pop()
+            else:
+                urls = [self.attrs['url']]
 
-        if self.attrs['chapter_count'] == '': self.attrs['chapter_count'] = 1
+            if self.attrs['chapter_count'] == '': self.attrs['chapter_count'] = 1
 
-        for url in urls:
-            attrs = {}
-            attrs.update(self.attrs)
-            attrs['url'] = url
+            for url in urls:
+                attrs = {}
+                attrs.update(self.attrs)
+                attrs['url'] = url
 
-            for site in self.sites:
-                _site = site.replace('.', '_')
-                if site in url:
-                    exec(f'from parsers.{_site} import {_site}')
-                    exec(f'self.parser = {_site}(self.web_parser.config, self.web_parser.log_file)')
-                    break
+                for site in self.sites:
+                    _site = site.replace('.', '_')
+                    if site in url:
+                        exec(f'from parsers.{_site} import {_site}')
+                        exec(f'self.parser = {_site}(self.web_parser.config, self.web_parser.log_file)')
+                        break
 
-            if self.parser:
-                self.parser.parse(attrs)
+                if self.parser:
+                    self.parser.parse(attrs)
 
-            time.sleep(1)
-        self.running = False
+                time.sleep(1)
+            self.running = False
+        except Exception as e:
+            import traceback
+            with open(self.web_parser.log_file, 'a') as file:
+                traceback.print_exc(file=file)
