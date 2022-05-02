@@ -6,7 +6,7 @@ from tests.config import config, attrs
 
 class FanfoxTest(TestCase):
     def setUp(self):
-        self.site = fanfox_net(config)
+        self.site = fanfox_net(config, 'trash/log.txt')
         self.site.set_chromedriver_path('../chromedriver')
         self.attrs = attrs
         self.attrs['url'] = 'https://fanfox.net/manga/the_lazy_prince_becomes_a_genius/c001/1.html#ipg1'

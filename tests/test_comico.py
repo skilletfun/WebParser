@@ -6,7 +6,7 @@ from tests.config import config, attrs
 
 class ComicoTest(TestCase):
     def setUp(self):
-        self.site = comico_kr(config)
+        self.site = comico_kr(config, 'trash/log.txt')
         self.site.set_chromedriver_path('../chromedriver')
         self.attrs = attrs
         self.attrs['url'] = 'https://www.comico.kr/comic/323/chapter/1/product'
@@ -17,8 +17,7 @@ class ComicoTest(TestCase):
             if os.path.isfile(file): os.remove(file)
             else: shutil.rmtree(file)
 
-    def test_multi(self):
-        self.attrs['chapter_count'] = '2'
+    def test_one(self):
         self.assertEqual(self.site.parse(self.attrs), True)
 
 

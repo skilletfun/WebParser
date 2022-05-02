@@ -1,14 +1,15 @@
 from unittest import TestCase, main
 import os, shutil
-from parsers.comic_naver_com import comic_naver_com
+from parsers.kuaikanmanhua_com import kuaikanmanhua_com
 from tests.config import config, attrs
 
 
-class NaverTest(TestCase):
+class KuaikanmanhuaTest(TestCase):
     def setUp(self):
-        self.site = comic_naver_com(config, 'trash/log.txt')
+        self.site = kuaikanmanhua_com(config, 'trash/log.txt')
+        self.site.set_chromedriver_path('../chromedriver')
         self.attrs = attrs
-        self.attrs['url'] = 'https://comic.naver.com/webtoon/detail?titleId=746834&no=90&weekday=sat'
+        self.attrs['url'] = 'https://www.kuaikanmanhua.com/web/comic/252117/'
 
     def tearDown(self):
         for file in os.listdir('trash'):

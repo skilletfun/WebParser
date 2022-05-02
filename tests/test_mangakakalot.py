@@ -1,14 +1,14 @@
 from unittest import TestCase, main
 import os, shutil
-from parsers.comic_naver_com import comic_naver_com
+from parsers.mangakakalot_com import mangakakalot_com
 from tests.config import config, attrs
 
 
-class NaverTest(TestCase):
+class MangakakalotTest(TestCase):
     def setUp(self):
-        self.site = comic_naver_com(config, 'trash/log.txt')
+        self.site = mangakakalot_com(config, 'trash/log.txt')
         self.attrs = attrs
-        self.attrs['url'] = 'https://comic.naver.com/webtoon/detail?titleId=746834&no=90&weekday=sat'
+        self.attrs['url'] = 'https://mangakakalot.com/chapter/bd921300/chapter_23'
 
     def tearDown(self):
         for file in os.listdir('trash'):

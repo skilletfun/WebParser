@@ -6,7 +6,7 @@ from tests.config import config, attrs
 
 class WebtoonsTest(TestCase):
     def setUp(self):
-        self.site = webtoons_com(config)
+        self.site = webtoons_com(config, 'trash/log.txt')
         self.attrs = attrs
         self.attrs['url'] = 'https://www.webtoons.com/en/slice-of-life/hyperfocus/ep-11-walking-home/viewer?title_no=3340&episode_no=11'
 
@@ -16,8 +16,8 @@ class WebtoonsTest(TestCase):
             if os.path.isfile(file): os.remove(file)
             else: shutil.rmtree(file)
 
-    def test_one(self):
-        self.assertEqual(self.site.parse(self.attrs), True)
+    # def test_one(self):
+    #     self.assertEqual(self.site.parse(self.attrs), True)
 
     def test_multi(self):
         self.attrs['chapter_count'] = '2'

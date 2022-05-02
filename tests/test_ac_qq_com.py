@@ -6,7 +6,7 @@ from tests.config import config, attrs
 
 class AcqqcomTest(TestCase):
     def setUp(self):
-        self.site = ac_qq_com(config)
+        self.site = ac_qq_com(config, 'trash/log.txt')
         self.site.set_chromedriver_path('../chromedriver')
         self.attrs = attrs
         self.attrs['url'] = 'https://ac.qq.com/ComicView/index/id/631605/cid/1'
@@ -20,10 +20,6 @@ class AcqqcomTest(TestCase):
                 shutil.rmtree(file)
 
     def test_one(self):
-        self.assertEqual(self.site.parse(self.attrs), True)
-
-    def test_multi(self):
-        self.attrs['chapter_count'] = '2'
         self.assertEqual(self.site.parse(self.attrs), True)
 
 
