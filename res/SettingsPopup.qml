@@ -350,7 +350,7 @@ Popup {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.right: parent.right
 
-                        //Component.onCompleted: { text = parser.get_browser_version(); }
+                        Component.onCompleted: { text = parser.get_browser_version(); }
                     }
                 }
 
