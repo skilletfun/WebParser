@@ -38,7 +38,8 @@ class basic_parser(QObject):
                 return func(self, *args, **kwargs)
             except Exception:
                 with open(self.log_file, 'a') as file:
-                    traceback.print_exc(file=file)
+                    file.write('Error in function: ' + func.__name__ + '\n\n')
+                    file.write(traceback.format_exc())
                 self.quit_browser()
                 raise TypeError
         return wrapper
@@ -74,6 +75,7 @@ class basic_parser(QObject):
 
     def quit_browser(self):
         if self.browser:
+            self.browser.execute_script('window.stop();')
             self.browser.close()
             self.browser.quit()
 
