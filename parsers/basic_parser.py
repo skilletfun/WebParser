@@ -137,7 +137,7 @@ class basic_parser(QObject):
             if not el in ' .|/\\?*><:"!^;,№':
                 t_title += el
 
-        self.save_folder = os.path.join(self.save_folder, t_title)
+        self.save_folder = os.path.join(self.true_save_folder, t_title)
 
         if not os.path.exists(self.save_folder):
             os.mkdir(self.save_folder)
