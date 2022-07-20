@@ -1,0 +1,8 @@
+pyqt5
+asyncqt
+requests
+aiohttp
+bs4
+aiofiles
+selenium
+seleniumwire
