@@ -1,16 +1,21 @@
-import time
-import sys
-import requests
 import os
-from bs4 import BeautifulSoup as bs
+import sys
+import time
 import asyncio
+import traceback
+
 import aiohttp
 import aiofiles
-from PyQt5.QtCore import QObject, pyqtSignal
+import requests
+
+from bs4 import BeautifulSoup as bs
 from seleniumwire import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-import traceback
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from PyQt5.QtCore import QObject, pyqtSignal
 
 
 class basic_parser(QObject):
@@ -26,7 +31,7 @@ class basic_parser(QObject):
         self.total_download_images = 0
         self.current_title = ''
         self.path_to_driver = 'chromedriver'
-        
+
         if not config['remember_save_folder']: self.save_folder = ''
         else: self.save_folder = config['save_folder']
         self.true_save_folder = self.save_folder
@@ -36,12 +41,12 @@ class basic_parser(QObject):
         def wrapper(self, *args, **kwargs):
             try:
                 return func(self, *args, **kwargs)
-            except Exception:
+            except Exception as e:
                 with open(self.log_file, 'a') as file:
                     file.write('Error in function: ' + func.__name__ + '\n\n')
                     file.write(traceback.format_exc())
                 self.quit_browser()
-                raise TypeError
+                raise e
         return wrapper
 
     @logging
@@ -51,11 +56,11 @@ class basic_parser(QObject):
         options.add_argument("--disable-features=VizDisplayCompositor")
         options.add_argument('--disable-extensions')
 
-        if user:
-            options.add_argument("--user-data-dir=" + self.config['path_to_browser'])
-
         if sys.platform.startswith('linux'):
             options.add_argument('--password-store=gnome')
+
+        if user:
+            options.add_argument("--user-data-dir=" + self.config['path_to_browser'])
 
         if headless:
             options.add_argument("--headless")
@@ -64,10 +69,8 @@ class basic_parser(QObject):
             options.add_argument('--blink-settings=imagesEnabled=false')
 
         ex_path = self.get_chromedriver_path()
+
         if not full_load:
-            from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-            from selenium.webdriver.support.ui import WebDriverWait
-            from selenium.webdriver.support import expected_conditions as EC
             capa = DesiredCapabilities.CHROME
             capa["pageLoadStrategy"] = "none"
             return webdriver.Chrome(chrome_options=options, executable_path=ex_path, desired_capabilities=capa)
@@ -98,32 +101,32 @@ class basic_parser(QObject):
             self.attrs['chapter_count'] = 1
 
     @logging
-    async def download(self, session, url, _headers, name):
+    async def download(self, url, _headers, name):
         """ Download function. Declare single because of async. """
-        tries = self.config['download_tries']
-        status = 0
+        async with self.sem:
+            async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(force_close=True)) as session:
+                tries = self.config['download_tries']
+                status = 0
+                img = None
 
-        while (not status == 200) and tries > 0:
-            try:
-                img = await session.get(url, headers=_headers)
-                status = img.status
-                tries -= 1
-            except:
-                pass
+                while (not status == 200) and tries > 0:
+                    img = await session.get(url, headers=_headers)
+                    status = img.status
+                    tries -= 1
+                    print(status)
+                    await asyncio.sleep(0.5)
 
-        if status == 200:
-            f = await aiofiles.open(os.path.join(self.save_folder, name + '.jpg'), mode="wb")
-            await f.write(await img.read())
-            await f.close()
-            img.close()
-            self.total_download_images += 1
+                if status == 200:
+                    f = await aiofiles.open(os.path.join(self.save_folder, name + '.jpg'), mode="wb")
+                    await f.write(await img.read())
+                    await f.close()
+                    img.close()
+                    self.total_download_images += 1
 
     @logging
     def find_element(self, src, tag, type, value):
         """ Find element in html-page. """
-        soup = bs(src, "lxml")
-        res = soup.find(tag, {type: value})
-        return res
+        return bs(src, "lxml").find(tag, {type: value})
 
     @logging
     def get_response(self, url, headers=None):
@@ -171,12 +174,8 @@ class basic_parser(QObject):
     @logging
     def download_images(self, images, name_of_files, _headers=None):
         """ Download images by urls. Start async function. """
-        try:
-            limit = self.config['requests_limit']
-            for step in range(0, len(images), limit):
-                asyncio.run(self.t_download_images(images[step:step+limit], name_of_files[step:step+limit], _headers))
-        except Exception:
-            pass
+        asyncio.run(self.t_download_images(images, name_of_files, _headers))
+
 
     @logging
     async def t_download_images(self, images, name_of_files, _headers=None):
@@ -193,26 +192,21 @@ class basic_parser(QObject):
                 "Sec-GPC": "1",
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
             }
-
+        self.sem = asyncio.Semaphore(self.config['requests_limit'])
+        # async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(force_close=True)) as session:
         i = 0
         tasks = []
-        sem = asyncio.Semaphore(self.config['semaphore_limit'] + int(self.attrs['timeout']) * 1000)
-        async with sem:
-            connector = aiohttp.TCPConnector(force_close=True)
-            async with aiohttp.ClientSession(connector=connector) as session:
-                for img_url in images:
-                    temp_url = img_url
+        for img_url in images:
+            temp_url = img_url
 
-                    if 'Host' in _headers:
-                        _headers['Host'] = temp_url.replace('http://', '').replace('https://', '').split('/')[0]
+            if 'Host' in _headers:
+                _headers['Host'] = temp_url.replace('http://', '').replace('https://', '').split('/')[0]
 
-                    task = asyncio.create_task(
-                        self.download(session, img_url, _headers, str(name_of_files[i])))
-                    tasks.append(task)
-                    i += 1
-
-                await asyncio.gather(*tasks)
-            await session.close()
+            task = asyncio.create_task(
+                self.download(img_url, _headers, str(name_of_files[i])))
+            tasks.append(task)
+            i += 1
+        await asyncio.gather(*tasks)
 
     @logging
     def check_all_checkboxes(self):
