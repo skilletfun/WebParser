@@ -1,43 +1,33 @@
 # This Python file uses the following encoding: utf-8
-import sys
 import os
+import sys
+import asyncio
 
-from Web_parser import Web_parser
+from asyncqt import QEventLoop
 from PyQt5.QtGui import QGuiApplication, QIcon
 from PyQt5.QtQml import QQmlApplicationEngine
 from PyQt5.QtCore import QThread
 
-from asyncqt import QEventLoop
-import asyncio
+from Web_parser import Web_parser
 
-""" Define necessary variables. """
-
-ORGANIZATION_NAME = 'SkilletfunINC'
-ORGANIZATION_DOMAIN = 'empty.com'
-APPLICATION_NAME = 'MultiTool'
-SETTINGS_TRAY = 'settings/tray'
 
 if __name__ == "__main__":
     app = QGuiApplication(sys.argv)
     engine = QQmlApplicationEngine()
 
-    loop = QEventLoop(app) # New
-    asyncio.set_event_loop(loop) # New
+    loop = QEventLoop(app)
+    asyncio.set_event_loop(loop)
 
     ctx = engine.rootContext()
 
-    """ Set up the application. """
-    
-    app.setApplicationName(ORGANIZATION_NAME)
-    app.setOrganizationDomain(ORGANIZATION_DOMAIN)
-    app.setApplicationName(APPLICATION_NAME)
+    app.setApplicationName('SkilletfunINC')
+    app.setOrganizationDomain('empty.com')
+    app.setApplicationName('MultiTool')
     app.setWindowIcon(QIcon('res/icon.png'))
 
     web = Web_parser()
 
     ctx.setContextProperty("parser", web)
-
-    """ Start app. """
 
     engine.load(os.path.join(os.path.dirname(__file__), "res/Web_parser.qml"))
 
