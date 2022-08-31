@@ -1,23 +1,23 @@
-import sys
-from PyQt5.QtCore import pyqtSlot, QObject, QThread
-import json
 import os
+import sys
+import json
+import traceback
 import subprocess
+
 from datetime import datetime
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from PyQt5.QtCore import pyqtSlot, QObject, QThread
+
 from Worker import Worker
-from parsers.basic_parser import basic_parser
 
 
 class Web_parser(QObject):
     SYMBOLS_FOR_DELETE = 7
-
     my_thread = None
     worker = None
     notifier = None
-
-    log_file = None
-
-    # Config
     config = {
         'save_folder': '',
         'remember_save_folder': True,
@@ -27,32 +27,34 @@ class Web_parser(QObject):
         'semaphore_limit': 200,
         'download_tries': 10,
         'scroll_delay': 0.2,
-        'version': 'v1.6'
+        'version': 'v1.7'
     }
 
     def __init__(self):
         super(Web_parser, self).__init__()
+
         # Prepare logs
         if not os.path.exists('logs'):
             os.mkdir('logs')
         time_now = str(datetime.now()).replace(' ', '_').replace(':', '_')[:-7]
         self.log_file = f'logs/{time_now}.txt'
+
         # Notifier
         if not sys.platform.startswith("linux"):
-            self.SYMBOLS_FOR_DELETE = 8
             import win10toast
+            self.SYMBOLS_FOR_DELETE = 8
             self.notifier = win10toast.ToastNotifier()
+
         # Load config
         if os.path.exists('config.json'):
             with open('config.json', 'r') as f:
-                file = json.load(f)
-                self.config.update(file)
+                self.config.update(json.load(f))
         self.update_config_file()
 
     @pyqtSlot(str, int, str, str, bool, bool, str)
     def parse(self, url, timeout, save_folder, redownload_numbers, do_archive, do_merge, chapter_count):
         try:
-            # Check given save_folder. Change it in 'config.json' if needed
+            # Check given save_folder. Change it in 'config.json' if needed.
             if save_folder != '':
                 self.config['save_folder'] = save_folder[self.SYMBOLS_FOR_DELETE:]
                 self.update_config_file()
@@ -75,7 +77,6 @@ class Web_parser(QObject):
             self.worker.moveToThread(self.my_thread)
             self.my_thread.start()
         except Exception:
-            import traceback
             with open(self.log_file, 'a') as file:
                 traceback.print_exc(file=file)
 
@@ -101,9 +102,6 @@ class Web_parser(QObject):
         """ Check the accuracy of setted up chromedriver. """
         res = ''
         try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-
             options = Options()
             options.add_argument("--headless")
             options.add_argument("--disable-features=VizDisplayCompositor")
@@ -113,7 +111,6 @@ class Web_parser(QObject):
             else: ex_path = 'chromedriver'
 
             browser = webdriver.Chrome(chrome_options=options, executable_path=ex_path)
-
             browser.get('https://www.google.com')
             browser.close()
             browser.quit()
