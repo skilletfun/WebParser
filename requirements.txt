@@ -6,3 +6,5 @@ bs4
 aiofiles
 selenium
 seleniumwire
+win10toast
+patoolib
