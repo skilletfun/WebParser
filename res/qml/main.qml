@@ -1,11 +1,11 @@
 import QtQuick 2.15
-import QtQuick.Controls 2.12
 import QtQuick.Window 2.12
+import QtQuick.Controls 2.12
 
 Window {
     id: root
 
-// ---------------------- Colors -------------------------//
+    // Colors
 
     property color color_base: "#EEFFFF"
     property color color_accent: "#f0f4f2"
@@ -13,26 +13,26 @@ Window {
     property color color_press: "#E8E8E8"
     property color color_select: 'white'
 
-// ------------------ Window Settings -------------------- //
+    // Window Settings
 
+    title: "WebParser"
+    visible: true
+    color: color_base
     width: 900
     height: 600
-
     minimumHeight: 600
     minimumWidth: 900
     maximumHeight: 600
     maximumWidth: 900
 
-    title: "WebParser"
-    visible: true
-    color: color_base
+    //  Title
 
-// ----------------------------  Title ----------------------------//
     Header {
         anchors.fill: parent
     }
 
-// ----------------------------  Settings Button  ----------------------------//
+    // Settings Button
+
     Button {
         id: settings
 
@@ -47,7 +47,7 @@ Window {
         background: Rectangle { radius: height / 2;
             color: settings.pressed ? color_press : settings.hovered ? 'white' : 'transparent'; }
 
-        icon.source: "gear.png"
+        icon.source: "../icons/gear.png"
         icon.color: 'transparent'
         icon.width: width * 0.9
         icon.height: width * 0.9
@@ -55,22 +55,19 @@ Window {
         onReleased: { settings_popup.open(); }
     }
 
-// ----------------------------  Settings Popup Main  ----------------------------//
+    // Settings Popup Main
 
     SettingsPopup {
         id: settings_popup
-
         height: parent.height * 0.98
         width: parent.width * 0.98
         anchors.centerIn: parent
-
     }
 
-// ---------------------------- Additional Settings ----------------------------//
+    // Additional Settings
 
     AddSettings {
         id: add_settings
-
         width: 200
         height: 300
         radius: 30
@@ -78,12 +75,7 @@ Window {
         y: 150
     }
 
-    RedownloadPopup {
-        id: redownload_images_popup
-        anchors.centerIn: parent
-    }
-
-//---------------------------------- Settings Url----------------------------------------------//
+    // Settings Url
 
     UrlSettings {
         id: url_settings
@@ -93,7 +85,7 @@ Window {
         y: 150
     }
 
-//----------------------------------- Button PARSE ----------------------------------------------//
+    // Button PARSE
 
     Button {
         id: startParse

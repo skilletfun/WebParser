@@ -23,13 +23,13 @@ if __name__ == "__main__":
     app.setApplicationName('SkilletfunINC')
     app.setOrganizationDomain('empty.com')
     app.setApplicationName('MultiTool')
-    app.setWindowIcon(QIcon('res/icon.png'))
+    app.setWindowIcon(QIcon('res/icons/icon.png'))
 
     web = Web_parser()
 
     ctx.setContextProperty("parser", web)
 
-    engine.load(os.path.join(os.path.dirname(__file__), "res/Web_parser.qml"))
+    engine.load(os.path.join(os.path.dirname(__file__), "res/qml/main.qml"))
 
     if not engine.rootObjects():
         sys.exit(-1)
