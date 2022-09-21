@@ -1,10 +1,12 @@
 ﻿import QtQuick 2.15
 import QtQuick.Controls 2.15
 
+
 Rectangle {
     color: 'transparent'
 
-// ---------------------  Title ----------------------- //
+    // Title
+
     Text {
         id: title
 
@@ -19,7 +21,8 @@ Rectangle {
         anchors.topMargin: 30
     }
 
-// ---------------------  Author - Skilletfun ----------------------- //
+    // Author - Skilletfun
+
     Text {
         id: author
         visible: false
@@ -33,11 +36,12 @@ Rectangle {
         anchors.verticalCenter: title.verticalCenter
     }
 
-// ---------------------  Supported sites ----------------------- //
+    // Supported sites
+
     Text {
         id: help_title
 
-        text: 'Support 16 sites'
+        text: 'Support ' + String(model_sites.count) + ' sites'
         font.pixelSize: 16
         font.family: 'Arial'
 
@@ -47,7 +51,8 @@ Rectangle {
         anchors.topMargin: 10
     }
 
-// ---------------------  Help button that open list of sites ----------------------- //
+    // Help button that open list of sites
+
     Button {
         id: help_title_btn
 
@@ -68,7 +73,7 @@ Rectangle {
         }
     }
 
-// ---------------------  Popup with list of sites ----------------------- //
+    // Popup with list of sites
     Popup {
         id: help_title_popup
 
