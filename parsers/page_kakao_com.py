@@ -1,5 +1,6 @@
-from parsers.basic_parser import basic_parser
 import time
+
+from parsers.basic_parser import basic_parser
 # https://page.kakao.com/content/59033754/viewer/59046495
 
 class page_kakao_com(basic_parser):

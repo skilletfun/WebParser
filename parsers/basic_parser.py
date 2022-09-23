@@ -36,6 +36,17 @@ class basic_parser(QObject):
         if not config['remember_save_folder']: self.save_folder = ''
         else: self.save_folder = config['save_folder']
         self.true_save_folder = self.save_folder
+        self.HEADERS = {
+            "Accept": "image/webp,*/*",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            'Host': '',
+            "DNT": "1",
+            "Referer": self.attrs['url'],
+            "Sec-GPC": "1",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
+        }
 
     def logging(func):
         """ Decorator for logging. """
@@ -165,33 +176,16 @@ class basic_parser(QObject):
         return title_page, images
 
     @logging
-    def rebuild_redownload_images(self, numbers, images):
-        """ Rebuild array with urls. """
-        numbers = numbers.split()
-        numbers = [int(i) - 1 for i in numbers]
-        return [images[i] for i in numbers]
-
-    @logging
-    def download_images(self, images, name_of_files, _headers=None):
+    def download_images(self, images, _headers=None):
         """ Download images by urls. Start async function. """
-        asyncio.run(self.t_download_images(images, name_of_files, _headers))
-
+        asyncio.run(self.t_download_images(images, _headers))
 
     @logging
-    async def t_download_images(self, images, name_of_files, _headers=None):
+    async def t_download_images(self, images, _headers=None):
         """ Download images by urls. """
-        if _headers is None:
-            _headers = {
-                "Accept": "image/webp,*/*",
-                "Accept-Language": "en-US,en;q=0.5",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Connection": "keep-alive",
-                'Host': '',
-                "DNT": "1",
-                "Referer": self.attrs['url'],
-                "Sec-GPC": "1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
-            }
+        if not _headers:
+            _headers = self.HEADERS
+
         self.sem = asyncio.Semaphore(self.config['requests_limit'])
         i = 0
         tasks = []
@@ -201,8 +195,7 @@ class basic_parser(QObject):
             if 'Host' in _headers:
                 _headers['Host'] = temp_url.replace('http://', '').replace('https://', '').split('/')[0]
 
-            task = asyncio.create_task(
-                self.download(img_url, _headers, str(name_of_files[i])))
+            task = asyncio.create_task(self.download(img_url, _headers, str(i+1)))
             tasks.append(task)
             i += 1
         await asyncio.gather(*tasks)
@@ -222,14 +215,8 @@ class basic_parser(QObject):
         self.total_images = len(images)
         self.total_download_images = 0
 
-        if self.attrs['redownload_numbers'] != '':
-            images = self.rebuild_redownload_images(self.attrs['redownload_numbers'], images)
-            name_of_files = self.attrs['redownload_numbers'].split()
-        else:
-            name_of_files = range(1, len(images)+1)
-
         self.prepare_save_folder()
-        self.download_images(images, name_of_files)
+        self.download_images(images)
         self.check_all_checkboxes()
 
     @logging
