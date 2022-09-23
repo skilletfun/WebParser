@@ -4,9 +4,10 @@ import time
 import asyncio
 import traceback
 
-import aiohttp
+# import aiohttp
 import aiofiles
 import requests
+import requests_async
 
 from bs4 import BeautifulSoup as bs
 from seleniumwire import webdriver
@@ -104,7 +105,7 @@ class basic_parser(QObject):
     async def download(self, url, _headers, name):
         """ Download function. Declare single because of async. """
         async with self.sem:
-            async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(force_close=True)) as session:
+            async with requests_async.Session() as session:
                 tries = self.config['download_tries']
                 status = 0
                 img = None
@@ -113,14 +114,13 @@ class basic_parser(QObject):
                     img = await session.get(url, headers=_headers)
                     status = img.status
                     tries -= 1
-                    print(status)
                     await asyncio.sleep(0.5)
 
                 if status == 200:
                     f = await aiofiles.open(os.path.join(self.save_folder, name + '.jpg'), mode="wb")
                     await f.write(await img.read())
                     await f.close()
-                    img.close()
+                    await img.close()
                     self.total_download_images += 1
 
     @logging
@@ -193,7 +193,6 @@ class basic_parser(QObject):
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
             }
         self.sem = asyncio.Semaphore(self.config['requests_limit'])
-        # async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(force_close=True)) as session:
         i = 0
         tasks = []
         for img_url in images:
