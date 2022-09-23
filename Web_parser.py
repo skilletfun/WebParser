@@ -51,8 +51,8 @@ class Web_parser(QObject):
                 self.config.update(json.load(f))
         self.update_config_file()
 
-    @pyqtSlot(str, int, str, str, bool, bool, str)
-    def parse(self, url, timeout, save_folder, redownload_numbers, do_archive, do_merge, chapter_count):
+    @pyqtSlot(str, int, str, bool, bool, str)
+    def parse(self, url, timeout, save_folder, do_archive, do_merge, chapter_count):
         try:
             # Check given save_folder. Change it in 'config.json' if needed.
             if save_folder != '':
@@ -64,7 +64,7 @@ class Web_parser(QObject):
             attrs = {
                 'url': url,
                 'timeout': timeout,
-                'redownload_numbers': redownload_numbers,
+                'redownload_numbers': '',
                 'do_archive': do_archive,
                 'do_merge': do_merge,
                 'chapter_count': chapter_count
@@ -167,7 +167,7 @@ class Web_parser(QObject):
             self.notify_flag = False
             if not sys.platform.startswith("linux"):
                 self.notifier.show_toast(title='WebParser', msg='Downloading all chapters complete',
-                                         icon_path='res/icon.ico', threaded=True)
+                                         icon_path='res/icons/icon.ico', threaded=True)
             else:
                 os.system('notify-send "Downloading all chapters complete" "WebParser"')
         return str(running)
