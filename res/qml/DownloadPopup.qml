@@ -11,7 +11,7 @@ Popup {
 
     closePolicy: Popup.NoAutoClose
 
-    background: Rectangle { radius: 15; border.width: 1; color: root.color_base }
+    background: Rectangle { radius: 15; border.width: 1; color: color_base }
 
     enter: Transition {
         NumberAnimation { property: 'opacity'; from: 0; to: 1; duration: 200 }

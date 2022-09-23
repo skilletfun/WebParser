@@ -57,6 +57,36 @@ Rectangle {
 
             Switch { id: do_merge; }
         }
+
+        // Waifu2x
+
+        Row {
+            height: 35
+            width: parent.width
+            Text {
+                text: 'Waifu2x\t'
+                font.pixelSize: 17
+                font.family: 'Arial'
+                anchors.verticalCenter: do_waifu.verticalCenter
+            }
+
+            Switch { id: do_waifu; }
+        }
+
+        // Upload to GDrive
+
+        Row {
+            height: 35
+            width: parent.width
+            Text {
+                text: 'GDrive\t'
+                font.pixelSize: 17
+                font.family: 'Arial'
+                anchors.verticalCenter: upload.verticalCenter
+            }
+
+            Switch { id: upload; }
+        }
         Rectangle { color: 'transparent'; width: 1; height: 1; }
 
         // Timeout

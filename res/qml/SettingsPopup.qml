@@ -127,7 +127,8 @@ Popup {
 
         sourceComponent: main_settings_rect
     }
-// ------------------------------------------ Main Settings Component ------------------------//
+
+    // Main Settings Component
     Component {
         id: main_settings_rect
         Rectangle {
@@ -272,7 +273,8 @@ Popup {
             }
         }
     }
-// ------------------------------------------ Browser Settings Component ------------------------//
+
+    // Browser Settings Component
     Component {
         id: browser_settings_rect
         Rectangle {
@@ -297,7 +299,7 @@ Popup {
                 anchors.top: parent.top
                 anchors.topMargin: 60
 
-// ------------------------------------------ Set up location of browser ------------------------//
+                // Set up location of browser
                 Row {
                     clip: true
                     width: parent.width
@@ -332,7 +334,7 @@ Popup {
                 Row { height: parent.cur_height; width: parent.width;
                     Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
 
-// ------------------------------------------ Check Version of browser ------------------------//
+                // Check Version of browser
                 Row {
                     height: parent.cur_height
                     width: parent.width
@@ -357,7 +359,7 @@ Popup {
                 Row { height: parent.cur_height; width: parent.width;
                     Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
 
-// ------------------------------------------ Check Chromedriver ------------------------//
+                // Check Chromedriver
                 Row {
                     height: parent.cur_height
                     width: parent.width
@@ -396,7 +398,7 @@ Popup {
                 Row { height: parent.cur_height; width: parent.width;
                     Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
 
-// ------------------------------------------ Download Chromedriver ------------------------//
+                // Download Chromedriver
                 Row {
                     height: parent.cur_height
                     width: parent.width
@@ -452,7 +454,8 @@ Popup {
             }
         }
     }
-// ------------------------------------------ Download settings Component ------------------------//
+
+    // Download settings Component
     Component {
         id: download_settings_rect
         Rectangle {
@@ -477,7 +480,7 @@ Popup {
                 anchors.top: parent.top
                 anchors.topMargin: 60
 
-// ------------------------------------------ Limit for asyncio download ------------------------//
+                // Limit for asyncio download
                 Row {
                     height: parent.cur_height
                     width: parent.width
@@ -504,7 +507,7 @@ Popup {
                 Row { height: parent.cur_height; width: parent.width;
                     Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
 
-// ------------------------------------------ Semaphore for asyncio ------------------------//
+                // Semaphore for asyncio
                 Row {
                     height: parent.cur_height
                     width: parent.width
@@ -532,7 +535,7 @@ Popup {
                 Row { height: parent.cur_height; width: parent.width;
                     Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
 
-// ------------------------------------------ Download retries ------------------------//
+                // Download tries
                 Row {
                     height: parent.cur_height
                     width: parent.width
@@ -559,7 +562,9 @@ Popup {
             }
         }
     }
-// ------------------------------------------ About Component ------------------------//
+
+    // About Component
+
     Component {
         id: about_settings_rect
         Rectangle {
@@ -707,16 +712,13 @@ Popup {
         }
     }
 
-//------------------------------------- Popup Browser Location Settings ---------------------------//
+    // Popup Browser Location Settings
 
     Popup {
         id: browser_location_settings_popup
-
         width: 600
         height: 150
-
         anchors.centerIn: parent
-
         modal: true
 
         background: Rectangle { border.color: "black"; radius: 20 }
@@ -731,11 +733,9 @@ Popup {
 
         Text {
             id: browser_location_text
-
             text: 'Path to Google Chrome | Chromium Data'
             font.family: 'Arial'
             font.pixelSize: 16
-
             x: 45
             anchors.top: parent.top
             anchors.left: parent.left
@@ -744,17 +744,13 @@ Popup {
 
         TextField {
             id: browser_location_field
-
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: browser_location_text.bottom
             anchors.margins: 15
             anchors.topMargin: 10
-
             placeholderText: config_path_to_browser
-
             height: 50
-
             selectionColor: 'white'
 
             background: Rectangle { radius: 10; border.width: 1; color: browser_location_field.focus ?
