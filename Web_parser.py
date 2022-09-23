@@ -23,8 +23,7 @@ class Web_parser(QObject):
         'remember_save_folder': True,
         'path_to_browser': '',
         'notifications': True,
-        'requests_limit': 100,
-        'semaphore_limit': 200,
+        'requests_limit': 10,
         'download_tries': 10,
         'scroll_delay': 0.2,
         'version': 'v1.7'
@@ -64,7 +63,6 @@ class Web_parser(QObject):
             attrs = {
                 'url': url,
                 'timeout': timeout,
-                'redownload_numbers': '',
                 'do_archive': do_archive,
                 'do_merge': do_merge,
                 'chapter_count': chapter_count
