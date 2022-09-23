@@ -13,7 +13,6 @@ Popup {
     property bool config_notifications: true
 
     property int config_requests_limit: 0
-    property int config_semaphore_limit: 0
     property int config_download_tries: 0
 
     property double config_scroll_delay: 0
@@ -486,7 +485,7 @@ Popup {
                     width: parent.width
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: 'Base limits to requests'
+                        text: 'Request\'s limit'
                         font.pixelSize: 19
                         font.family: 'Arial'
                     }
@@ -503,34 +502,6 @@ Popup {
                         onAccepted: { focus = false; config_requests_limit = Number(text); }
                     }
                 }
-
-                Row { height: parent.cur_height; width: parent.width;
-                    Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
-
-                // Semaphore for asyncio
-                Row {
-                    height: parent.cur_height
-                    width: parent.width
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: 'Base semaphore value'
-                        font.pixelSize: 19
-                        font.family: 'Arial'
-                    }
-
-                    TextField {
-                        id: semaphore_value
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.right: parent.right
-                        font.pixelSize: 19
-                        validator: RegularExpressionValidator {regularExpression: /[0-9]+/}
-                        background: Rectangle {color: 'transparent'}
-                        text: config_semaphore_limit
-                        selectionColor: 'white'
-                        onAccepted: { focus = false; config_semaphore_limit = Number(text); }
-                    }
-                }
                 
                 Row { height: parent.cur_height; width: parent.width;
                     Rectangle { color: 'grey'; height: 1; width: parent.width; anchors.verticalCenter: parent.verticalCenter; }}
@@ -542,7 +513,7 @@ Popup {
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: 'Count of tries to download'
+                        text: 'Download\'s tries'
                         font.pixelSize: 19
                         font.family: 'Arial'
                     }
@@ -780,7 +751,6 @@ Popup {
         settings_popup.config_notifications = json['notifications'];
 
         settings_popup.config_requests_limit = json['requests_limit'];
-        settings_popup.config_semaphore_limit = json['semaphore_limit'];
         settings_popup.config_download_tries = json['download_tries'];
 
         settings_popup.config_scroll_delay = json['scroll_delay'];
@@ -798,7 +768,6 @@ Popup {
             notifications: config_notifications,
 
             requests_limit: config_requests_limit,
-            semaphore_limit: config_semaphore_limit,
             download_tries: config_download_tries,
 
             scroll_delay: config_scroll_delay
