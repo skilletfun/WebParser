@@ -5,6 +5,6 @@ aiohttp
 bs4
 aiofiles
 selenium
-seleniumwire
+selenium-wire
 win10toast
-patoolib
+patool
