@@ -30,7 +30,6 @@ class page_kakao_com(basic_parser):
                 "return document.getElementsByClassName('css-3q7n7r-ScrollImageViewerImage');")
 
             images = [el.get_attribute('src') for el in images]
-            print(images, sep='\n')
             self.full_download(images, title)
 
             if self.attrs['chapter_count'] > 0:
