@@ -1,12 +1,12 @@
-import sys
 import time
-import traceback
 
 from PyQt5.QtCore import pyqtSlot, QObject
 
+from utils.logging import log
+
 
 class Worker(QObject):
-    def __init__(self, attrs, web_parser):
+    def __init__(self, attrs, web_parser) -> None:
         super(Worker, self).__init__()
 
         self.attrs = attrs
@@ -35,16 +35,16 @@ class Worker(QObject):
         ]
 
     @pyqtSlot()
-    def run(self):
+    def run(self) -> None:
         try:
             self.running = True
-
             if self.attrs['url'].startswith('file://'):
                 self.attrs['url'] = self.attrs['url'][self.SYMBOLS_FOR_DELETE:]
 
                 with open(self.attrs['url'], "r") as f:
                     urls = f.read().split('\n')
-                    if urls[-1] == '\n' or urls[-1] == '': urls.pop()
+                    if urls[-1] in ['\n', '']:
+                        urls.pop()
             else:
                 urls = [self.attrs['url']]
 
@@ -57,18 +57,19 @@ class Worker(QObject):
         except Exception as e:
             raise e
 
-    def parse(self, url):
-        attrs = self.attrs
-        attrs['url'] = url
+    @log
+    def parse(self, url: str) -> None:
+        """ Import neccessary parser and start parse. """
 
+        self.attrs['url'] = url
         for site in self.sites:
             _site = site.replace('.', '_')
             if site in url:
                 exec(f'from parsers.{_site} import {_site}')
-                exec(f'self.parser = {_site}(self.web_parser.config, self.web_parser.log_file)')
+                exec(f'self.parser = {_site}(self.web_parser.config)')
                 break
 
         if self.parser:
-            self.parser.parse(attrs)
+            self.parser.parse(self.attrs)
 
         time.sleep(1)
