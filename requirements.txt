@@ -8,3 +8,5 @@ selenium
 selenium-wire
 win10toast
 patool
+requests-async
+Pillow
