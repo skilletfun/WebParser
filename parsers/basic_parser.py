@@ -43,7 +43,6 @@ class basic_parser(QObject):
             "Connection": "keep-alive",
             'Host': '',
             "DNT": "1",
-            "Referer": self.attrs['url'],
             "Sec-GPC": "1",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
         }
@@ -123,12 +122,12 @@ class basic_parser(QObject):
 
                 while (not status == 200) and tries > 0:
                     img = await session.get(url, headers=_headers)
-                    status = img.status
+                    status = img.status_code
                     tries -= 1
                     await asyncio.sleep(0.5)
 
                 if status == 200:
-                    f = await aiofiles.open(os.path.join(self.save_folder, name + '.jpg'), mode="wb")
+                    f = await aiofiles.open(os.path.join(self.config['save_folder'], name + '.jpg'), mode="wb")
                     await f.write(await img.read())
                     await f.close()
                     await img.close()
