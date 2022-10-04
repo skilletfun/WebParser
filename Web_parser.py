@@ -39,7 +39,6 @@ class Web_parser(QObject):
             self.my_thread.terminate()
             self.my_thread.quit()
             self.my_thread = None
-            self.worker.parser.quit_browser()
             self.worker = None
 
     @pyqtSlot(result=int)
