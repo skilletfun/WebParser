@@ -1,12 +1,11 @@
 pyqt5
 asyncqt
 requests
-aiohttp
 bs4
 aiofiles
 selenium
 selenium-wire
-win10toast
 patool
 requests-async
 Pillow
+win10toast
