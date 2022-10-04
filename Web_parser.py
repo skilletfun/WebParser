@@ -8,18 +8,23 @@ import config
 
 
 class Web_parser(QObject):
-    my_thread = None
-    worker = None
-    notifier = None
+    my_thread = None    # Поток, в котором происходит парсинг
+    worker = None       # Объект, который занимается парсингом
+    notifier = None     # Объект, который посылает уведомления
 
     def __init__(self) -> None:
         super(Web_parser, self).__init__()
+        # Если текущая ОС - не линукс, то импортируем доп-пакет
         if not sys.platform.startswith("linux"):
             import win10toast
             self.notifier = win10toast.ToastNotifier()
 
     @pyqtSlot(str, str)
     def parse(self, url: str, chapters_count: str) -> None:
+        """ Точка входа в парсинг. 
+        :param url: ссылка на главу
+        :param chapters_count: количество глав для скачки
+        """
         self.notify_flag = True
         self.my_thread = QThread()
         self.worker = Worker(url, chapters_count)
