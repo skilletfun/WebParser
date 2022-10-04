@@ -1,3 +1,15 @@
+# Заголовки для запросов, менять не рекомендуется
+HEADERS = {
+    "Accept": "image/webp,*/*",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+    'Host': '',
+    "DNT": "1",
+    "Sec-GPC": "1",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
+}
+
 # Если у вас Windows, установите число 8, если Linux, установите число 7
 SYMBOLS_FOR_DELETE = 8
 
