@@ -18,7 +18,6 @@ class Browser:
     def __init__(self, full_load: bool=True):
         options = Options()
         options.add_argument("--disable-features=VizDisplayCompositor")
-        options.add_argument('--blink-settings=imagesEnabled=false')
         options.add_argument('--disable-extensions')
 
         if sys.platform.startswith('linux'):
@@ -41,10 +40,6 @@ class Browser:
     def get(self, url: str) -> None:
         """ Загружает страницу. """
         self.driver.get(url)
-
-    def go_to_new_tab(self) -> None:
-        """ Открывает новую пустую вкладку. """
-        self.driver.switch_to.new_window('tab')
 
     def minimize(self) -> None:
         """ Сворачивает браузер. """
