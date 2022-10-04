@@ -4,12 +4,12 @@ import asyncio
 import aiofiles
 import requests
 import requests_async
-from bs4 import BeautifulSoup as bs
 from PyQt5.QtCore import QObject
+from bs4 import BeautifulSoup as bs
 
-from utils import file_transform
-from utils.logging import log
 import config
+from utils.logging import log
+from utils import file_transform
 
 
 class basic_parser(QObject):
@@ -19,29 +19,14 @@ class basic_parser(QObject):
         self.total_images = 0
         self.total_download_images = 0
         self.current_title = ''
-        
-        self.HEADERS = {
-            "Accept": "image/webp,*/*",
-            "Accept-Language": "en-US,en;q=0.5",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Connection": "keep-alive",
-            'Host': '',
-            "DNT": "1",
-            "Sec-GPC": "1",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
-        }
 
     @log
     def fix_vars(self, url: str, chapter_count: str):
         """ Преобразует переменные в корректный вид. """
         if not url.startswith('http'):
             url = 'https://' + url
-
         if chapter_count != '*':
-            if chapter_count == '':
-                chapter_count = 1
-            else:
-                chapter_count = int(chapter_count)
+            chapter_count = 1 if chapter_count == '' else int(chapter_count)
             step = 1
         else:
             step = 0
@@ -51,7 +36,7 @@ class basic_parser(QObject):
     @log
     async def download(self, url: str, name: str) -> None:
         """ Загружает картинку по ссылке. """
-        headers = self.HEADERS
+        headers = config.HEADERS
         headers['Host'] = url.replace('http://', '').replace('https://', '').split('/')[0]
         async with self.sem:
             async with requests_async.Session() as session:
@@ -73,18 +58,18 @@ class basic_parser(QObject):
                     self.total_download_images += 1
 
     @log
-    def find_element(self, src, tag, type, value):
+    def find_element(self, src: str, tag: str, type: str, value: str) -> str:
         """ Находит указанный элемент в html-разметке. """
         return bs(src, "lxml").find(tag, {type: value})
 
     @log
-    def get_response(self, url):
+    def get_response(self, url: str) -> str:
         """ Посылает запрос и возвращает результат в текстовом виде. """
         return requests.get(url, headers=self.HEADERS).text
 
     @log
-    def prepare_save_folder(self, title):
-        """ Подготавливает папку для сохранения сканов. """
+    def prepare_save_folder(self, title: str) -> str:
+        """ Подготавливает (создает) папку для сохранения сканов. """
         title = ''.join(el for el in title if not el in ' .|/\\?*><:"!^;,№')
         folder = os.path.join(config.SAVE_FOLDER, title)
         if not os.path.exists(folder):
@@ -123,12 +108,10 @@ class basic_parser(QObject):
             file_transform.archivate(config.SAVE_FOLDER, title)
 
     @log
-    def full_download(self, images, title):
-        """ Главная функция загрузки. """
+    def full_download(self, images: list, title: str) -> None:
         self.current_title = title
         self.total_images = len(images)
         self.total_download_images = 0
-
         self.prepare_save_folder(title)
         self.download_images(images)
         self.check_checkboxes(title)
