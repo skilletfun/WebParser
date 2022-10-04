@@ -134,19 +134,3 @@ class basic_parser(QObject):
         self.prepare_save_folder(title)
         self.download_images(images)
         self.check_checkboxes(title)
-
-    @log
-    def try_next_chapter(self, browser, script_next_chapter, title, script_title=None):
-        """ Попытка загрузить следующую главу. """
-        old_title = title
-        browser.execute(script_next_chapter)
-        max_wait = 10
-        time.sleep(5)
-
-        while title == old_title and max_wait > 0:
-            if script_title:
-                title = browser.execute(script_title)
-            else:
-                title = browser.title
-            max_wait -= 1
-            time.sleep(1)
