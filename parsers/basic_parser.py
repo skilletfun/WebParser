@@ -1,11 +1,9 @@
 import os
-import time
 import asyncio
 
 import aiofiles
 import requests
 import requests_async
-
 from bs4 import BeautifulSoup as bs
 from PyQt5.QtCore import QObject
 
