@@ -123,11 +123,11 @@ class Browser:
         # self.current_title = title
         # self.total_images = len(list_bytes)
         # self.total_download_images = 0
-        names = range(1, len(list_bytes) + 1)
-        # self.prepare_save_folder()
-
-        for name, img in zip(names, list_bytes):
+        for name, img in zip(range(1, len(list_bytes) + 1), list_bytes):
             with open(join(path, str(name) + '.jpg'), mode="wb") as f:
                 f.write(img)
                 f.close()
                 # self.total_download_images += 1
+
+    def __del__(self):
+        self.shutdown()
