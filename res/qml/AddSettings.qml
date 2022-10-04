@@ -4,7 +4,6 @@ import QtQuick.Controls 2.14
 Rectangle {
     property bool merge: do_merge.checked
     property bool archive: do_archive.checked
-    property int timeout: slider_timeout.value
 
     width: 200
     height: 300
@@ -86,27 +85,6 @@ Rectangle {
             }
 
             Switch { id: upload; }
-        }
-        Rectangle { color: 'transparent'; width: 1; height: 1; }
-
-        // Timeout
-
-        Text {
-            text: 'Timeout: ' + String(slider_timeout.value)
-            font.family: 'Arial'
-            font.pixelSize: 17
-        }
-
-        // Timeout Slider
-
-        Slider {
-            id: slider_timeout
-            from: 0
-            to: 15
-            value: 0
-            stepSize: 1
-            anchors.left: parent.left
-            anchors.right: parent.right
         }
     }
 }

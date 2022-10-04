@@ -6,7 +6,6 @@ import Qt.labs.platform 1.0
 Rectangle {
     id: chapter_settings_rect
 
-    property string folder: chooseSaveFolderDialog.folder
     property string url: url_field.text
     property string count_of_chapters: chapter_count_field.text
 
@@ -36,7 +35,7 @@ Rectangle {
         font.pixelSize: 16
         x: 45
         anchors.top: title_chapter_settings.top
-        anchors.topMargin: 40
+        anchors.topMargin: 60
     }
 
     // Url Field
@@ -97,13 +96,13 @@ Rectangle {
     Text {
         id: chapter_count_text
 
-        text: 'Count of chapters\n' + '* for all available'
+        text: 'Count of chapters. Set * for all available chapters.'
         font.family: 'Arial'
         font.pixelSize: 16
 
-        anchors.left: chapter_url_text.left
-        anchors.top: url_field.bottom
-        anchors.topMargin: 40
+        anchors.left: chapter_count_field.right
+        anchors.leftMargin: 20
+        anchors.verticalCenter: chapter_count_field.verticalCenter
     }
 
     // Field with count of chapters
@@ -119,8 +118,8 @@ Rectangle {
         horizontalAlignment: Text.AlignHCenter
 
         anchors.left: chapter_url_text.left
-        anchors.top: chapter_count_text.bottom
-        anchors.topMargin: 10
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 40
 
         selectionColor: color_select
         background: Rectangle { radius: 10; border.width: 1;
@@ -132,31 +131,5 @@ Rectangle {
         onAccepted: { focus = false; }
 
         onEditingFinished: { focus = false; }
-    }
-
-    // Button save folder
-
-    Button {
-        id: chooseSaveFolder
-
-        height: chapter_count_field.height
-        width: height
-
-        icon.source: '../icons/savefolder.png'
-        icon.color: 'transparent'
-        icon.width: width * 0.9
-        icon.height: width * 0.9
-
-        anchors.verticalCenter: chapter_count_field.verticalCenter
-        anchors.left: btn_urls.left
-
-        background: Rectangle { color: chooseSaveFolder.down ? color_press : chooseSaveFolder.hovered ? color_hover : 'white'; }
-
-        onReleased: { chooseSaveFolderDialog.open(); }
-    }
-
-    FolderDialog {
-        id: chooseSaveFolderDialog
-        title: "Choose save folder"
     }
 }

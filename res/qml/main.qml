@@ -31,39 +31,6 @@ Window {
         anchors.fill: parent
     }
 
-    // Settings Button
-
-    Button {
-        id: settings
-
-        height: 60
-        width: height
-
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.rightMargin: 25
-        anchors.topMargin: 25
-
-        background: Rectangle { radius: height / 2;
-            color: settings.pressed ? color_press : settings.hovered ? 'white' : 'transparent'; }
-
-        icon.source: "../icons/gear.png"
-        icon.color: 'transparent'
-        icon.width: width * 0.9
-        icon.height: width * 0.9
-
-        onReleased: { settings_popup.open(); }
-    }
-
-    // Settings Popup Main
-
-    SettingsPopup {
-        id: settings_popup
-        height: parent.height * 0.98
-        width: parent.width * 0.98
-        anchors.centerIn: parent
-    }
-
     // Additional Settings
 
     AddSettings {
@@ -106,8 +73,7 @@ Window {
             color: startParse.pressed ? color_press : startParse.hovered ? color_hover : 'white'; }
 
         onReleased: {
-            parser.parse(url_settings.url, add_settings.timeout, url_settings.folder,
-                add_settings.archive, add_settings.merge, url_settings.count_of_chapters);
+            parser.parse(url_settings.url, url_settings.count_of_chapters);
             download_popup.open();
         }
     }
