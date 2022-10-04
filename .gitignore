@@ -3,3 +3,4 @@ config.json
 chromedriver.exe
 logs
 env
+logfile.log
