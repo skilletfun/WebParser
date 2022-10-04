@@ -15,7 +15,7 @@ from utils.logging import log
 
 class Browser:
     """ Предоставляет доступ к браузеру. """
-    def __init__(self, user: str='', disable_images: bool=False, full_load: bool=False):
+    def __init__(self, full_load: bool=True):
         options = Options()
         options.add_argument("--disable-features=VizDisplayCompositor")
         options.add_argument('--blink-settings=imagesEnabled=false')
@@ -23,12 +23,6 @@ class Browser:
 
         if sys.platform.startswith('linux'):
             options.add_argument('--password-store=gnome')
-
-        if user:
-            options.add_argument("--user-data-dir=" + user)
-
-        if disable_images:
-            options.add_argument('--blink-settings=imagesEnabled=false')
 
         if not full_load:
             capa = DesiredCapabilities.CHROME
@@ -47,6 +41,14 @@ class Browser:
     def get(self, url: str) -> None:
         """ Загружает страницу. """
         self.driver.get(url)
+
+    def go_to_new_tab(self) -> None:
+        """ Открывает новую пустую вкладку. """
+        self.driver.switch_to.new_window('tab')
+
+    def minimize(self) -> None:
+        """ Сворачивает браузер. """
+        self.driver.minimize_window()
 
     def execute(self, script: str, tries: int=5, sleep: float=0.5) -> Any:
         """ Выполняет js-скрипт в браузере
@@ -88,6 +90,7 @@ class Browser:
         """
         while True:
             if self.check_element(by, value, by_driver):
+                time.sleep(0.5)
                 return True
             else:
                 max_wait -= 0.2
@@ -110,6 +113,9 @@ class Browser:
         """ Закрывает вкладку и выключает браузер (chromedriver). """
         self.driver.close()
         self.driver.quit()
+
+    def title(self):
+        return self.driver.title
 
     @log
     def save_images_from_bytes(self, path: str, list_bytes: list, title: str) -> None:
