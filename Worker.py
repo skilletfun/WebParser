@@ -102,7 +102,7 @@ class Worker(QObject):
         browser.get(url)
         while True:
             self.chapters_count -= step
-            title = browser.title
+            title = browser.title()
             if title == old_title: break
             script = "document.getElementById('comicContain').getElementsByTagName('img')"
             length = int(browser.execute('return ' + script + '.length;'))
@@ -116,7 +116,7 @@ class Worker(QObject):
                     continue
                 images.append(browser.execute('return ' + script + f'[{i}].src;'))
             images = images[:1] + images[2:]
-            self.full_download(images, title)
+            self.parser.full_download(images, title)
             if self.chapters_count > 0:
                 browser.get(browser.execute("return document.getElementById('nextChapter').href;"))
             else: break
