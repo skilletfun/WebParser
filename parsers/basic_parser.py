@@ -1,5 +1,6 @@
 import os
 import asyncio
+from typing import Tuple
 
 import aiofiles
 import requests
@@ -21,7 +22,7 @@ class basic_parser(QObject):
         self.current_title = ''
 
     @log
-    def fix_vars(self, url: str, chapter_count: str):
+    def fix_vars(self, url: str, chapter_count: str) -> Tuple[str, int, int]:
         """ Преобразует переменные в корректный вид. """
         if not url.startswith('http'):
             url = 'https://' + url
@@ -65,7 +66,7 @@ class basic_parser(QObject):
     @log
     def get_response(self, url: str) -> str:
         """ Посылает запрос и возвращает результат в текстовом виде. """
-        return requests.get(url, headers=self.HEADERS).text
+        return requests.get(url, headers=config.HEADERS).text
 
     @log
     def prepare_save_folder(self, title: str) -> str:
@@ -78,29 +79,29 @@ class basic_parser(QObject):
         return folder
 
     @log
-    def find_images(self, src, tag_type, tag_type_for_search, value_of_ttfs, custom_tag=None):
+    def find_images(self, src: str, tag_type: str, ttfs: str, value_of_ttfs: str, custom_tag: str=None) -> Tuple[str, list]:
         """ Находит в разметке ссылки на картинки. """
         soup = bs(src, "lxml")
         title_page = soup.find('title').text
-        images = soup.find(tag_type, {tag_type_for_search: value_of_ttfs})
+        images = soup.find(tag_type, {ttfs: value_of_ttfs})
         if not custom_tag: tag = 'img'
         else: tag = custom_tag
         images = images.find_all(tag)
         return title_page, images
 
     @log
-    def download_images(self, images):
+    def download_images(self, images: list) -> None:
         """ Запускает скачку картинок. """
         asyncio.run(self.async_download_images(images))
 
     @log
-    async def async_download_images(self, images):
+    async def async_download_images(self, images: list) -> None:
         """ Скачка картинок. """
         self.sem = asyncio.Semaphore(config.REQUESTS_LIMIT)
         await asyncio.gather(*[asyncio.create_task(self.download(el[1], str(el[0]))) for el in enumerate(images, 1)])
 
     @log
-    def check_checkboxes(self, title):
+    def check_checkboxes(self, title: str) -> None:
         """ Если отмечены опции, то выполнение соответствующих действий. """
         if False:
             file_transform.merge_images(config.SAVE_FOLDER)
