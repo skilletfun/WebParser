@@ -79,13 +79,12 @@ class basic_parser(QObject):
         return folder
 
     @log
-    def find_images(self, src: str, tag_type: str, ttfs: str, value_of_ttfs: str, custom_tag: str=None) -> Tuple[str, list]:
+    def find_images(self, src: str, tag_type: str, ttfs: str, value_of_ttfs: str, tag: str=None) -> Tuple[str, list]:
         """ Находит в разметке ссылки на картинки. """
         soup = bs(src, "lxml")
         title_page = soup.find('title').text
         images = soup.find(tag_type, {ttfs: value_of_ttfs})
-        if not custom_tag: tag = 'img'
-        else: tag = custom_tag
+        tag = tag if tag else 'img' 
         images = images.find_all(tag)
         return title_page, images
 
