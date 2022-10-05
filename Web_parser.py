@@ -41,8 +41,7 @@ class Web_parser(QObject):
     def cancel_download(self) -> None:
         """ Прерывает загрузку. """
         if self.worker:
-            self.my_thread.terminate()
-            self.my_thread.quit()
+            self.my_thread.deleteLater()
             self.my_thread = None
             self.worker = None
 
