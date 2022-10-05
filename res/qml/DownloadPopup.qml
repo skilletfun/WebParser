@@ -8,7 +8,6 @@ Popup {
     property bool download: false
 
     modal: true
-
     closePolicy: Popup.NoAutoClose
 
     background: Rectangle { radius: 15; border.width: 1; color: color_base }
