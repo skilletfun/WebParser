@@ -14,11 +14,11 @@ HEADERS = {
 SYMBOLS_FOR_DELETE = 8
 
 # Папка для сохранения сканов
-# Внутри указанной папки будет создана еще папка с названием скачиваемой главы
-SAVE_FOLDER = "C:\\Users\\user\\Downloads"
+# Внутри указанной папки будет создана еще папка(-и) с названием скачиваемой главы
+SAVE_FOLDER = "C:\\Users\\Sergey\\Downloads"
 
 # Путь до браузера на движке Chromium (Chrome, Chromium, Canary, Vivaldi...)
-PATH_TO_BROWSER = "C:\\Users\\user\\AppData\\Local\\Chromium\\User Data\\Default"
+PATH_TO_BROWSER = "C:\\Users\\Sergey\\AppData\\Local\\Chromium\\User Data\\Default"
 
 # Посылать ли уведомленя о завершении работы (True / False)
 NOTIFY = True
