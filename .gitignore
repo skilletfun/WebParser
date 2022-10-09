@@ -1,6 +1,10 @@
 __pycache__
-config.json
+.idea
 chromedriver.exe
 logs
 env
 logfile.log
+compile.bat
+main.spec
+build
+dist
