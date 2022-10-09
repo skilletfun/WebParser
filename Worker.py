@@ -22,15 +22,15 @@ class Worker(QObject):
             'comic.naver.com': self.comic_naver_com,
             'comico.kr': None,
             'fanfox.net': None,
-            'kuaikanmanhua.com': None,
+            'kuaikanmanhua.com': self.kuaikanmanhua_com,
             'king-manga.com': self.king_manga_com,
             'manga.bilibili.com': None,
-            'mangakakalot.com': None,
+            'mangakakalot.com': self.mangakakalot_com,
             'mangareader.to': None,
             'manhuadb.com': None,
             'mechacomic.jp': None,
             'page.kakao.com': self.page_kakao_com,
-            'rawdevart.com': None,
+            'rawdevart.com': self.rawdevart_com,
             'ridibooks.com': None,
             'webmota.com': self.webmota_com,
             'webtoons.com': self.webtoons_com
@@ -122,8 +122,8 @@ class Worker(QObject):
             url = url[:url.find('weekday')-1]
         self.parser = basic_parser()
         url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
-        browser.get(url)
         while True:
+            browser.get(url)
             self.chapters_count -= step
             src = browser.get_source()
             if 'list?titleId' in browser.driver.current_url: break
@@ -137,6 +137,9 @@ class Worker(QObject):
 
     @log
     def webtoons_com(self, browser: Browser, url: str) -> None:
+        #
+        #   NEED FIX (ACCESS DENIED)
+        #
         self.parser = basic_parser()
         url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
         while True:
@@ -145,11 +148,9 @@ class Worker(QObject):
             title, images = self.parser.find_images(src, 'div', 'id', '_imageList')
             images = [img.get('data-url') for img in images]
             self.parser.full_download(images, title)
-            print(*images, sep='\n')
             if self.chapters_count > 0:
                 res = self.parser.find_element(src, 'a', 'class', '_nextEpisode')
-                if res: url = res.get('href')
-                else: break
+                if not (url := res.get('href')): break
             else: break
 
     @log
@@ -182,3 +183,48 @@ class Worker(QObject):
                 if not (url := res.get('href')): break
             else: break
 
+    @log
+    def kuaikanmanhua_com(self, browser: Browser, url: str) -> None:
+        self.parser = basic_parser()
+        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
+        while True:
+            browser.get(url)
+            self.chapters_count -= step
+            src = browser.get_source()
+            title, images = self.parser.find_images(src, 'div', 'class', 'imgList')
+            images = [img.get('data-src') for img in images if not img.get('data-src') is None]
+            self.parser.full_download(images, title)
+            if self.attrs['chapter_count'] > 0:
+                res = self.parser.find_element(src, 'div', 'class', 'AdjacentChapters').find_all('a')[-1]
+                if 'javascript' not in res:
+                    url = 'https://www.kuaikanmanhua.com' + res.get('href')
+                else: break
+            else: break
+
+    @log
+    def mangakakalot_com(self, browser: Browser, url: str) -> None:
+        #
+        #   NEED FIX (ACCESS DENIED)
+        #
+        self.parser = basic_parser()
+        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
+        while True:
+            self.chapters_count -= step
+            src = self.parser.get_response(url)
+            title, images = self.parser.find_images(src, 'div', 'class', 'container-chapter-reader')
+            images = [img.get('src') for img in images]
+            self.parser.full_download(images, title)
+            if self.chapters_count > 0:
+                res = bs(src, 'lxml').find_all('a', {'class': 'back'})[-1]
+                if res: url = res.get('href')
+                else: break
+            else: break
+
+    @log
+    def rawdevart_com(self, browser: Browser, url: str) -> None:
+        self.parser = basic_parser()
+        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
+        src = self.parser.get_response(url)
+        title, images = self.parser.find_images(src, 'div', 'id', 'img-container')
+        images = [img.get('data-src') for img in images]
+        self.parser.full_download(images, title)
