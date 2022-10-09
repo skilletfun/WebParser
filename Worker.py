@@ -23,17 +23,17 @@ class Worker(QObject):
             'comico.kr': None,
             'fanfox.net': None,
             'kuaikanmanhua.com': None,
+            'king-manga.com': self.king_manga_com,
             'manga.bilibili.com': None,
             'mangakakalot.com': None,
             'mangareader.to': None,
             'manhuadb.com': None,
             'mechacomic.jp': None,
-            'scansnelo.com': None,
             'page.kakao.com': self.page_kakao_com,
             'rawdevart.com': None,
             'ridibooks.com': None,
-            'webmota.com': None,
-            'webtoons.com': None
+            'webmota.com': self.webmota_com,
+            'webtoons.com': self.webtoons_com
         }
 
     @pyqtSlot()
@@ -41,13 +41,11 @@ class Worker(QObject):
         self.running = True
         if self.url.startswith('file://'):
             self.url = self.url[SYMBOLS_FOR_DELETE:]
-
             with open(self.url, "r") as f:
                 urls = f.read().split('\n')
                 if urls[-1] in ['\n', '']:
                     urls.pop()
-        else:
-            urls = [self.url]
+        else: urls = [self.url]
         browser = None
         for url in urls:
             for site in self.SITES.keys():
@@ -57,8 +55,7 @@ class Worker(QObject):
                     self.SITES[site](browser, url)
                     break
                 time.sleep(1)
-        if browser:
-            browser.shutdown()
+        if browser: browser.shutdown()
         self.running = False
 
     @log
@@ -144,14 +141,44 @@ class Worker(QObject):
         url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
         while True:
             self.chapters_count -= step
-            src = self.get_response(url)
-            title, images = self.find_images(src, 'div', 'id', '_imageList')
+            src = self.parser.get_response(url)
+            title, images = self.parser.find_images(src, 'div', 'id', '_imageList')
             images = [img.get('data-url') for img in images]
-            self.full_download(images, title)
+            self.parser.full_download(images, title)
+            print(*images, sep='\n')
             if self.chapters_count > 0:
-                res = self.find_element(src, 'a', 'class', '_nextEpisode')
-                if res:
-                    url = res.get('href')
+                res = self.parser.find_element(src, 'a', 'class', '_nextEpisode')
+                if res: url = res.get('href')
                 else: break
             else: break
-    
+
+    @log
+    def webmota_com(self, browser: Browser, url: str) -> None:
+        self.parser = basic_parser()
+        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
+        while True:
+            self.chapters_count -= step
+            src = self.parser.get_response(url)
+            title, images = self.parser.find_images(src, 'ul', 'class', 'comic-contain', tag='amp-img')
+            images = [img.get('src') for img in images]
+            self.parser.full_download(images, title)
+            if self.chapters_count > 0:
+                res = self.parser.find_element(src, 'div', 'class', 'bottom-bar-tool').find_all('a')[3]
+                if not (url := res.get('href')): break
+            else: break
+
+    @log
+    def king_manga_com(self, browser: Browser, url: str) -> None:
+        self.parser = basic_parser()
+        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
+        while True:
+            self.chapters_count -= step
+            src = self.parser.get_response(url)
+            title, images = self.parser.find_images(src, 'div', 'class', 'reading-content')
+            images = [img.get('src').strip() for img in images]
+            self.parser.full_download(images, title)
+            if self.chapters_count > 0:
+                res = self.find_element(src, 'a', 'class', 'next_page')
+                if not (url := res.get('href')): break
+            else: break
+
