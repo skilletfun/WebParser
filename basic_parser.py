@@ -66,7 +66,7 @@ class basic_parser(QObject):
     @log
     def get_response(self, url: str) -> str:
         """ Посылает запрос и возвращает результат в текстовом виде. """
-        return requests.get(url, headers=config.HEADERS).text
+        return requests.get(url).text
 
     @log
     def prepare_save_folder(self, title: str) -> str:
