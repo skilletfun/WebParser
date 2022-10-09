@@ -1,12 +1,10 @@
-from distutils.command.config import config
-from email import parser
 import time
 
 import requests
 from PyQt5.QtCore import pyqtSlot, QObject
 from selenium.webdriver.common.by import By
 
-from parsers.basic_parser import basic_parser
+from basic_parser import basic_parser
 from utils.logging import log
 from utils.browser import Browser
 from config import SYMBOLS_FOR_DELETE, HEADERS
@@ -138,5 +136,22 @@ class Worker(QObject):
             self.parser.full_download(images, title)
             if self.chapters_count > 0:
                 url = url[:url.rfind('=') + 1] + str(int(url[url.rfind('=') + 1:]) + 1)
+            else: break
+
+    @log
+    def webtoons_com(self, browser: Browser, url: str) -> None:
+        self.parser = basic_parser()
+        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
+        while True:
+            self.chapters_count -= step
+            src = self.get_response(url)
+            title, images = self.find_images(src, 'div', 'id', '_imageList')
+            images = [img.get('data-url') for img in images]
+            self.full_download(images, title)
+            if self.chapters_count > 0:
+                res = self.find_element(src, 'a', 'class', '_nextEpisode')
+                if res:
+                    url = res.get('href')
+                else: break
             else: break
     
