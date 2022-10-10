@@ -1,4 +1,5 @@
 import time
+from typing import Callable, Tuple
 
 import requests
 from PyQt5.QtCore import pyqtSlot, QObject
@@ -14,7 +15,7 @@ class Worker(QObject):
     def __init__(self, url, chapters_count) -> None:
         super(Worker, self).__init__()
         self.url = url
-        self.chapters_count = chapters_count
+        self.chapters_count, self.step = self.fix_vars(chapters_count)
 
         self.SITES = {
             'ac.qq.com': self.ac_qq_com,
@@ -54,7 +55,7 @@ class Worker(QObject):
                     time.sleep(0.5)
                     self.SITES[site](browser, url)
                     break
-                time.sleep(1)
+            time.sleep(1)
         if browser: browser.shutdown()
         self.running = False
 
@@ -69,6 +70,36 @@ class Worker(QObject):
             title = browser.execute(script_title) if script_title else browser.title
             max_wait -= 1
             time.sleep(1)
+
+    @log
+    def fix_vars(self, chapter_count: str) -> Tuple[str, int]:
+        """ Преобразует переменные в корректный вид. """
+        if chapter_count != '*':
+            chapter_count = 1 if chapter_count == '' else int(chapter_count)
+            step = 1
+        else:
+            step = 0
+            chapter_count = 1
+        return chapter_count, step
+
+    @log
+    def base_bs_parse(self, url: str, get_images: Callable, tag: str, break_check: Callable):
+        if not url.startswith('http'):
+            url = 'https://' + url
+        self.parser = basic_parser()
+        src = self.parser.get_response(url)
+        if break_check(): return False
+        title, images = get_images(src)
+        images = [el.get(tag).strip() for el in images if el.get(tag)]
+        self.parser.full_download(images, title)
+
+    @log
+    def placeholder(self, browser: Browser, url: str) -> None:
+        for i in range(0, self.chapters_count, self.step):
+            get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'reading-content')
+            self.base_bs_parse(url, get_images, 'src', lambda: False)
+            res = self.find_element(src, 'a', 'class', 'next_page')
+            if not (url := res.get('href')): break
 
     @log
     def page_kakao_com(self, browser: Browser, url: str) -> None:
@@ -126,7 +157,7 @@ class Worker(QObject):
             browser.get(url)
             self.chapters_count -= step
             src = browser.get_source()
-            if 'list?titleId' in browser.driver.current_url: break
+            if 'list?titleId' in browser.current_url(): break
             title, images = self.parser.find_images(src, 'div', 'class', 'wt_viewer')
             title += str(int(url[url.rfind('=') + 1:]))
             images = [img.get('src') for img in images]
@@ -155,33 +186,19 @@ class Worker(QObject):
 
     @log
     def webmota_com(self, browser: Browser, url: str) -> None:
-        self.parser = basic_parser()
-        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
-        while True:
-            self.chapters_count -= step
-            src = self.parser.get_response(url)
-            title, images = self.parser.find_images(src, 'ul', 'class', 'comic-contain', tag='amp-img')
-            images = [img.get('src') for img in images]
-            self.parser.full_download(images, title)
-            if self.chapters_count > 0:
-                res = self.parser.find_element(src, 'div', 'class', 'bottom-bar-tool').find_all('a')[3]
-                if not (url := res.get('href')): break
-            else: break
+        for i in range(0, self.chapters_count, self.step):
+            get_images = lambda src: self.parser.find_images(src, 'ul', 'class', 'comic-contain', tag='amp-img')
+            self.base_bs_parse(url, get_images, 'src', lambda: False)
+            res = self.parser.find_element(src, 'div', 'class', 'bottom-bar-tool').find_all('a')[3]
+            if not (url := res.get('href')): break
 
     @log
     def king_manga_com(self, browser: Browser, url: str) -> None:
-        self.parser = basic_parser()
-        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
-        while True:
-            self.chapters_count -= step
-            src = self.parser.get_response(url)
-            title, images = self.parser.find_images(src, 'div', 'class', 'reading-content')
-            images = [img.get('src').strip() for img in images]
-            self.parser.full_download(images, title)
-            if self.chapters_count > 0:
-                res = self.find_element(src, 'a', 'class', 'next_page')
-                if not (url := res.get('href')): break
-            else: break
+        for i in range(0, self.chapters_count, self.step):
+            get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'reading-content')
+            self.base_bs_parse(url, get_images, 'src', lambda: False)
+            res = self.find_element(src, 'a', 'class', 'next_page')
+            if not (url := res.get('href')): break
 
     @log
     def kuaikanmanhua_com(self, browser: Browser, url: str) -> None:
@@ -192,7 +209,7 @@ class Worker(QObject):
             self.chapters_count -= step
             src = browser.get_source()
             title, images = self.parser.find_images(src, 'div', 'class', 'imgList')
-            images = [img.get('data-src') for img in images if not img.get('data-src') is None]
+            images = [img.get('data-src') for img in images if img.get('data-src')]
             self.parser.full_download(images, title)
             if self.attrs['chapter_count'] > 0:
                 res = self.parser.find_element(src, 'div', 'class', 'AdjacentChapters').find_all('a')[-1]
@@ -236,6 +253,8 @@ class Worker(QObject):
         old_title = ''
         base_url = 'document.getElementsByClassName(\'pages\')[0]'
         while True:
+            browser.get(url)
+            self.chapters_count -= step
             # load all images by scroll
             length = browser.execute(f'return {base_url}.getElementsByClassName(\'lazy_load\').length;', tries=10)
             time_for_check = SCROOL_DELAY
@@ -248,7 +267,6 @@ class Worker(QObject):
                 if length == browser.execute(f'return {base_url}.getElementsByClassName(\'loaded\').length;'): break
             # end loading
 
-            self.chapters_count -= step
             title = browser.title()
             if title == old_title: break
             sort_names = lambda x: int(x.url[x.url.index('__ridi__') + 8: x.url.index('.jpg?')])
