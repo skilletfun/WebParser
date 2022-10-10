@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 from basic_parser import basic_parser
 from utils.logging import log
 from utils.browser import Browser
-from config import SYMBOLS_FOR_DELETE, HEADERS
+from config import SYMBOLS_FOR_DELETE, HEADERS, SCROOL_DELAY
 
 
 class Worker(QObject):
@@ -31,7 +31,7 @@ class Worker(QObject):
             'mechacomic.jp': None,
             'page.kakao.com': self.page_kakao_com,
             'rawdevart.com': self.rawdevart_com,
-            'ridibooks.com': None,
+            'ridibooks.com': self.ridibooks_com,
             'webmota.com': self.webmota_com,
             'webtoons.com': self.webtoons_com
         }
@@ -228,3 +228,37 @@ class Worker(QObject):
         title, images = self.parser.find_images(src, 'div', 'id', 'img-container')
         images = [img.get('data-src') for img in images]
         self.parser.full_download(images, title)
+
+    @log
+    def ridibooks_com(self, browser: Browser, url: str) -> None:
+        self.parser = basic_parser()
+        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
+        old_title = ''
+        base_url = 'document.getElementsByClassName(\'pages\')[0]'
+        while True:
+            # load all images by scroll
+            length = browser.execute(f'return {base_url}.getElementsByClassName(\'lazy_load\').length;', tries=10)
+            time_for_check = SCROOL_DELAY
+            while True:
+                for i in range(length):
+                    browser.execute(f'{base_url}.getElementsByClassName(\'lazy_load\')[{i}].scrollIntoView();')
+                    time.sleep(time_for_check)
+                time_for_check /= 2
+                time.sleep(3)
+                if length == browser.execute(f'return {base_url}.getElementsByClassName(\'loaded\').length;'): break
+            # end loading
+
+            self.chapters_count -= step
+            title = browser.title()
+            if title == old_title: break
+            sort_names = lambda x: int(x.url[x.url.index('__ridi__') + 8: x.url.index('.jpg?')])
+            sort_urls = lambda x: url[url.rfind('/'):] + '/webtoon/__ridi__' in x.url
+            imgs_in_bytes = [el.response.body for el in sorted(list(filter(sort_urls, browser.requests)), key=sort_names)]
+            browser.save_images_from_bytes(imgs_in_bytes, title)
+            browser.clear_requests()
+
+            if self.chapters_count > 0:
+                s_next = "document.getElementsByClassName('next_button')[0].click();"
+                self.try_next_chapter(browser, s_next, title)
+                url = browser.current_url()
+            else: break
