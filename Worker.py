@@ -106,7 +106,15 @@ class Worker(QObject):
             self.base_bs_parse(url, get_images, 'src', lambda: 'list?titleId' in browser.current_url(), browser)
 
     @log
-    def base_driver_parse(self, url: str, browser: Browser, reqs_filter: str, filtered_images: list):
+    def base_driver_parse(
+            self,
+            url: str,
+            browser: Browser,
+            reqs_filter: str,
+            filtered_images: Callable,
+            scroll_element: str=None,
+            scroll_check: Callable=None
+    ) -> str:
         if not url.startswith('http'):
             url = 'https://' + url
         self.parser = basic_parser()
@@ -114,13 +122,14 @@ class Worker(QObject):
         time.sleep(3)
         title = browser.execute("return document.title;")
         self.parser.current_title = title
-        # SCROLL HERE
+        browser.scroll_page(scroll_element, scroll_check)
         reqs = list(set(filter(lambda x: reqs_filter in x.url, browser.requests())))
         self.parser.total_images = len(reqs)
         images_in_bytes = []
+        filtered_images = filtered_images()
         for i in range(len(filtered_images)):
             for j in range(len(reqs)):
-                if images_filter[i] in reqs[j].url:
+                if filtered_images[i] in reqs[j].url:
                     images_in_bytes.append(reqs[j].response.body)
                     reqs.pop(j)
                     break
@@ -130,32 +139,26 @@ class Worker(QObject):
 
     @log
     def driver_placeholder(self, browser: Browser, url: str) -> None:
+        images.append(browser.execute('return ' + script + f'[{i}].src;'))
+
+        images = images[:1] + images[2:]
+
         for i in range(0, self.chapters_count, self.step):
-            images = browser.execute("return document.getElementsByClassName('css-3q7n7r-ScrollImageViewerImage');")
-            images = [el.get_attribute('src') for el in images]
+            script = "return document.getElementById('comicContain').getElementsByTagName('img')"
+            scroll_check = lambda: browser.execute('return ' + script + f'[{i}].src;').endswith('pixel.gif')
+            images = lambda: [el.get_attribute('src') for el in browser.execute(script+';')]
+            title = self.base_driver_parse(url, browser, '', images, script, scroll_check)
+            url = browser.execute("return document.getElementById('nextChapter').href;")
+
+    @log
+    def page_kakao_com(self, browser: Browser, url: str) -> None:
+        for i in range(0, self.chapters_count, self.step):
+            script = "return document.getElementsByClassName('css-3q7n7r-ScrollImageViewerImage');"
+            images = lambda: [el.get_attribute('src') for el in browser.execute(script)]
             title = self.base_driver_parse(url, browser, 'https://page-edge.kakao.com/sdownload', images)
             s_next = "document.getElementsByClassName('linkItem')[3].click();"
             s_title = "return document.title;"
             self.try_next_chapter(browser, s_next, title, s_title)
-
-    @log
-    def page_kakao_com(self, browser: Browser, url: str) -> None:
-        old_title = ''
-        self.parser = basic_parser()
-        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
-        browser.get(url)
-        while True:
-            self.chapters_count -= step
-            title = browser.execute("return document.title;")
-            if title == old_title: break
-            images = browser.execute("return document.getElementsByClassName('css-3q7n7r-ScrollImageViewerImage');")
-            images = [el.get_attribute('src') for el in images]
-            self.parser.full_download(images, title)
-            if self.chapters_count > 0:
-                s_next = "document.getElementsByClassName('linkItem')[3].click();"
-                s_title = "return document.title;"
-                self.try_next_chapter(browser, s_next, title, s_title)
-            else: break
 
     @log
     def ac_qq_com(self, browser: Browser, url: str) -> None:
