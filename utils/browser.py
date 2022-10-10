@@ -1,6 +1,6 @@
 import sys
 import time
-from typing import Any
+from typing import Any, Callable
 from os.path import join
 
 from seleniumwire import webdriver
@@ -125,11 +125,28 @@ class Browser:
     @log
     def save_images_from_bytes(self, path: str, list_bytes: list) -> None:
         """ Сохраняет картинки из перехваченных байтов. """
+        print(len(list_bytes))
         for name, img in zip(range(1, len(list_bytes) + 1), list_bytes):
             with open(join(path, str(name) + '.jpg'), mode="wb") as f:
                 f.write(img)
                 f.close()
         self.clear_requests()
+
+    @log
+    def scroll_page(self, element: str, check: Callable):
+        length = int(self.execute('return ' + element + '.length;'))
+        # Первый круг прогрузки
+        for i in range(length):
+            self.execute(element + f'[{i}].scrollIntoView();')
+            time.sleep(0.5)
+        # Финальный круг прогрузки. Будет грузиться, пока не прогрузится все
+        for i in range(length):
+            self.execute(element + f'[{i}].scrollIntoView();')
+            # Если условие не выполнено (элемент не прогружен), то попытаться еще раз
+            while check():
+                time.sleep(0.2)
+                continue
+
 
     def __del__(self):
         self.shutdown()
