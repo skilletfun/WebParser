@@ -37,9 +37,10 @@ class Browser:
         }
         self.driver.switch_to.new_window('tab')
 
-    def get(self, url: str) -> None:
+    def get(self, url: str) -> str:
         """ Загружает страницу. """
         self.driver.get(url)
+        return self.driver.page_source
 
     def minimize(self) -> None:
         """ Сворачивает браузер. """
