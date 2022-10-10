@@ -22,19 +22,6 @@ class basic_parser(QObject):
         self.current_title = ''
 
     @log
-    def fix_vars(self, url: str, chapter_count: str) -> Tuple[str, int, int]:
-        """ Преобразует переменные в корректный вид. """
-        if not url.startswith('http'):
-            url = 'https://' + url
-        if chapter_count != '*':
-            chapter_count = 1 if chapter_count == '' else int(chapter_count)
-            step = 1
-        else:
-            step = 0
-            chapter_count = 1
-        return url, chapter_count, step
-
-    @log
     async def download(self, url: str, name: str) -> None:
         """ Загружает картинку по ссылке. """
         headers = config.HEADERS
@@ -72,9 +59,15 @@ class basic_parser(QObject):
     def prepare_save_folder(self, title: str) -> str:
         """ Подготавливает (создает) папку для сохранения сканов. """
         title = ''.join(el for el in title if not el in ' .|/\\?*><:"!^;,№')
-        folder = os.path.join(config.SAVE_FOLDER, title)
-        if not os.path.exists(folder):
+        folder = orig_folder = os.path.join(config.SAVE_FOLDER, title)
+        i = 1
+        while True:
+            if os.path.exists(folder):
+                folder = orig_folder + '_' + str(i)
+                i += 1
+                continue
             os.mkdir(folder)
+            break
         self.save_folder = folder
         return folder
 
@@ -87,6 +80,14 @@ class basic_parser(QObject):
         tag = tag if tag else 'img' 
         images = images.find_all(tag)
         return title_page, images
+
+    @log
+    def find_tilte(self, format_str=None):
+        title_page = soup.find('title').text
+        if format_str:
+            title_page = format_str(title_page)
+        return title_page
+
 
     @log
     def download_images(self, images: list) -> None:
