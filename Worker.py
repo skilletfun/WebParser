@@ -30,7 +30,7 @@ class Worker(QObject):
             'mangareader.to': None,
             'manhuadb.com': None,
             'mechacomic.jp': None,
-            'page.kakao.com': self.page_kakao_com,
+            'page.kakao.com': self.driver_placeholder,
             'rawdevart.com': self.rawdevart_com,
             'ridibooks.com': self.ridibooks_com,
             'webmota.com': self.webmota_com,
@@ -60,16 +60,21 @@ class Worker(QObject):
         self.running = False
 
     @log
-    def try_next_chapter(self, browser, script_next_chapter, title, script_title=None):
+    def try_next_chapter(self, browser: Browser, script_next_chapter: str, title: str, script_title: str=None):
         """ Попытка загрузить следующую главу. """
-        old_title = title
-        browser.execute(script_next_chapter)
-        max_wait = 10
-        time.sleep(5)
-        while title == old_title and max_wait > 0:
-            title = browser.execute(script_title) if script_title else browser.title
-            max_wait -= 1
-            time.sleep(1)
+        if self.chapters_count - self.step > 0:
+            old_title = title
+            browser.execute(script_next_chapter)
+            max_wait = 10
+            time.sleep(5)
+            while title == old_title and max_wait > 0:
+                title = browser.execute(script_title) if script_title else browser.title()
+                max_wait -= 1
+                time.sleep(1)
+            # Если все время вышло, уменьшим количество требуемых глав на 1.
+            # Особенно актуально для бесконечной загрузки
+            if max_wait == 0:
+                self.chapters_count -= 1
 
     @log
     def fix_chapter_count(self, chapter_count: str) -> Tuple[str, int]:
@@ -99,6 +104,39 @@ class Worker(QObject):
         for i in range(0, self.chapters_count, self.step):
             get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'wt_viewer')
             self.base_bs_parse(url, get_images, 'src', lambda: 'list?titleId' in browser.current_url(), browser)
+
+    @log
+    def base_driver_parse(self, url: str, browser: Browser, reqs_filter: str, filtered_images: list):
+        if not url.startswith('http'):
+            url = 'https://' + url
+        self.parser = basic_parser()
+        browser.get(url)
+        time.sleep(3)
+        title = browser.execute("return document.title;")
+        self.parser.current_title = title
+        # SCROLL HERE
+        reqs = list(set(filter(lambda x: reqs_filter in x.url, browser.requests())))
+        self.parser.total_images = len(reqs)
+        images_in_bytes = []
+        for i in range(len(filtered_images)):
+            for j in range(len(reqs)):
+                if images_filter[i] in reqs[j].url:
+                    images_in_bytes.append(reqs[j].response.body)
+                    reqs.pop(j)
+                    break
+        browser.save_images_from_bytes(self.parser.prepare_save_folder(title), images_in_bytes)
+        self.parser.total_download_images = len(reqs)
+        return title
+
+    @log
+    def driver_placeholder(self, browser: Browser, url: str) -> None:
+        for i in range(0, self.chapters_count, self.step):
+            images = browser.execute("return document.getElementsByClassName('css-3q7n7r-ScrollImageViewerImage');")
+            images = [el.get_attribute('src') for el in images]
+            title = self.base_driver_parse(url, browser, 'https://page-edge.kakao.com/sdownload', images)
+            s_next = "document.getElementsByClassName('linkItem')[3].click();"
+            s_title = "return document.title;"
+            self.try_next_chapter(browser, s_next, title, s_title)
 
     @log
     def page_kakao_com(self, browser: Browser, url: str) -> None:
