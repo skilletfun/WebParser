@@ -15,7 +15,7 @@ class Worker(QObject):
     def __init__(self, url, chapters_count) -> None:
         super(Worker, self).__init__()
         self.url = url
-        self.chapters_count, self.step = self.fix_vars(chapters_count)
+        self.chapters_count, self.step = self.fix_chapter_count(chapters_count)
 
         self.SITES = {
             'ac.qq.com': self.ac_qq_com,
@@ -72,7 +72,7 @@ class Worker(QObject):
             time.sleep(1)
 
     @log
-    def fix_vars(self, chapter_count: str) -> Tuple[str, int]:
+    def fix_chapter_count(self, chapter_count: str) -> Tuple[str, int]:
         """ Преобразует переменные в корректный вид. """
         if chapter_count != '*':
             chapter_count = 1 if chapter_count == '' else int(chapter_count)
@@ -83,23 +83,22 @@ class Worker(QObject):
         return chapter_count, step
 
     @log
-    def base_bs_parse(self, url: str, get_images: Callable, tag: str, break_check: Callable):
+    def base_bs_parse(self, url: str, get_images: Callable, tag: str, break_check: Callable, browser: Browser=None):
         if not url.startswith('http'):
             url = 'https://' + url
         self.parser = basic_parser()
-        src = self.parser.get_response(url)
+        src = self.parser.get_response(url) if not browser else browser.get(url)
         if break_check(): return False
         title, images = get_images(src)
         images = [el.get(tag).strip() for el in images if el.get(tag)]
         self.parser.full_download(images, title)
+        return src
 
     @log
-    def placeholder(self, browser: Browser, url: str) -> None:
+    def bs_placeholder(self, browser: Browser, url: str) -> None:
         for i in range(0, self.chapters_count, self.step):
-            get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'reading-content')
-            self.base_bs_parse(url, get_images, 'src', lambda: False)
-            res = self.find_element(src, 'a', 'class', 'next_page')
-            if not (url := res.get('href')): break
+            get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'wt_viewer')
+            self.base_bs_parse(url, get_images, 'src', lambda: 'list?titleId' in browser.current_url(), browser)
 
     @log
     def page_kakao_com(self, browser: Browser, url: str) -> None:
@@ -148,25 +147,6 @@ class Worker(QObject):
             else: break
 
     @log
-    def comic_naver_com(self, browser: Browser, url: str) -> None:
-        if 'weekday' in url:
-            url = url[:url.find('weekday')-1]
-        self.parser = basic_parser()
-        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
-        while True:
-            browser.get(url)
-            self.chapters_count -= step
-            src = browser.get_source()
-            if 'list?titleId' in browser.current_url(): break
-            title, images = self.parser.find_images(src, 'div', 'class', 'wt_viewer')
-            title += str(int(url[url.rfind('=') + 1:]))
-            images = [img.get('src') for img in images]
-            self.parser.full_download(images, title)
-            if self.chapters_count > 0:
-                url = url[:url.rfind('=') + 1] + str(int(url[url.rfind('=') + 1:]) + 1)
-            else: break
-
-    @log
     def webtoons_com(self, browser: Browser, url: str) -> None:
         #
         #   NEED FIX (ACCESS DENIED)
@@ -182,40 +162,6 @@ class Worker(QObject):
             if self.chapters_count > 0:
                 res = self.parser.find_element(src, 'a', 'class', '_nextEpisode')
                 if not (url := res.get('href')): break
-            else: break
-
-    @log
-    def webmota_com(self, browser: Browser, url: str) -> None:
-        for i in range(0, self.chapters_count, self.step):
-            get_images = lambda src: self.parser.find_images(src, 'ul', 'class', 'comic-contain', tag='amp-img')
-            self.base_bs_parse(url, get_images, 'src', lambda: False)
-            res = self.parser.find_element(src, 'div', 'class', 'bottom-bar-tool').find_all('a')[3]
-            if not (url := res.get('href')): break
-
-    @log
-    def king_manga_com(self, browser: Browser, url: str) -> None:
-        for i in range(0, self.chapters_count, self.step):
-            get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'reading-content')
-            self.base_bs_parse(url, get_images, 'src', lambda: False)
-            res = self.find_element(src, 'a', 'class', 'next_page')
-            if not (url := res.get('href')): break
-
-    @log
-    def kuaikanmanhua_com(self, browser: Browser, url: str) -> None:
-        self.parser = basic_parser()
-        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
-        while True:
-            browser.get(url)
-            self.chapters_count -= step
-            src = browser.get_source()
-            title, images = self.parser.find_images(src, 'div', 'class', 'imgList')
-            images = [img.get('data-src') for img in images if img.get('data-src')]
-            self.parser.full_download(images, title)
-            if self.attrs['chapter_count'] > 0:
-                res = self.parser.find_element(src, 'div', 'class', 'AdjacentChapters').find_all('a')[-1]
-                if 'javascript' not in res:
-                    url = 'https://www.kuaikanmanhua.com' + res.get('href')
-                else: break
             else: break
 
     @log
@@ -236,6 +182,39 @@ class Worker(QObject):
                 if res: url = res.get('href')
                 else: break
             else: break
+
+    @log
+    def comic_naver_com(self, browser: Browser, url: str) -> None:
+        for i in range(0, self.chapters_count, self.step):
+            if 'weekday' in url:
+                url = url[:url.find('weekday') - 1]
+            get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'wt_viewer')
+            self.base_bs_parse(url, get_images, 'src', lambda: 'list?titleId' in browser.current_url(), browser)
+            url = url[:url.rfind('=') + 1] + str(int(url[url.rfind('=') + 1:]) + 1)
+
+    @log
+    def webmota_com(self, browser: Browser, url: str) -> None:
+        for i in range(0, self.chapters_count, self.step):
+            get_images = lambda src: self.parser.find_images(src, 'ul', 'class', 'comic-contain', tag='amp-img')
+            page_src = self.base_bs_parse(url, get_images, 'src', lambda: False)
+            res = self.parser.find_element(page_src, 'div', 'class', 'bottom-bar-tool').find_all('a')[3]
+            if not (url := res.get('href')): break
+
+    @log
+    def king_manga_com(self, browser: Browser, url: str) -> None:
+        for i in range(0, self.chapters_count, self.step):
+            get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'reading-content')
+            page_src = self.base_bs_parse(url, get_images, 'src', lambda: False)
+            res = self.find_element(page_src, 'a', 'class', 'next_page')
+            if not (url := res.get('href')): break
+
+    @log
+    def kuaikanmanhua_com(self, browser: Browser, url: str) -> None:
+        for i in range(0, self.chapters_count, self.step):
+            get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'imgList')
+            page_src = self.base_bs_parse(url, get_images, 'data-src', lambda: False, browser)
+            res = self.parser.find_element(page_src, 'div', 'class', 'AdjacentChapters').find_all('a')[-1]
+            if 'javascript' not in res: url = 'https://www.kuaikanmanhua.com' + res.get('href')
 
     @log
     def rawdevart_com(self, browser: Browser, url: str) -> None:
