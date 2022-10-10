@@ -14,7 +14,7 @@ from utils.logging import log
 
 
 class Browser:
-    """ Предоставляет доступ к браузеру. """
+    """ Класс для управляения браузером. """
     def __init__(self, full_load: bool=True):
         options = Options()
         options.add_argument("--disable-features=VizDisplayCompositor")
@@ -62,7 +62,7 @@ class Browser:
         return False
 
     def check_element(self, by: By, value: str, by_driver: bool=False) -> bool:
-        """ Проверяет, есть ли на странице элемент
+        """ Проверяет, есть ли на странице указанный элемент
         :param by: как искать элемент [By.CLASS_NAME, By.ID, By.TAG_NAME]
         :param value: значение для поиска
         :param by_driver: искать через метод selenium или через script js
@@ -123,16 +123,13 @@ class Browser:
         return self.driver.current_url
 
     @log
-    def save_images_from_bytes(self, path: str, list_bytes: list, title: str) -> None:
-        """ Сохраняет картинки, перехватывая байты из запросов. """
-        # self.current_title = title
-        # self.total_images = len(list_bytes)
-        # self.total_download_images = 0
+    def save_images_from_bytes(self, path: str, list_bytes: list) -> None:
+        """ Сохраняет картинки из перехваченных байтов. """
         for name, img in zip(range(1, len(list_bytes) + 1), list_bytes):
             with open(join(path, str(name) + '.jpg'), mode="wb") as f:
                 f.write(img)
                 f.close()
-                # self.total_download_images += 1
+        self.clear_requests()
 
     def __del__(self):
         self.shutdown()
