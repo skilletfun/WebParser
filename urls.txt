@@ -3,7 +3,7 @@ bomtoon.com         https://www.bomtoon.com/comic/ep_view/tlawkddprp/01
 naver.com           https://comic.naver.com/webtoon/detail?titleId=746834&no=90&weekday=sat
 comico.kr           https://www.comico.kr/comic/323/chapter/1/product
 fanfox.net          https://fanfox.net/manga/the_lazy_prince_becomes_a_genius/c001/1.html#ipg1
-kakao.cpm           https://page.kakao.com/viewer?productId=57540660
+kakao.com           https://page.kakao.com/viewer?productId=57540660
 king-manga.com      https://king-manga.com/manga/my-senior-brother-is-too-steady/chapter-1/
 kuaikanmanhua.com   https://www.kuaikanmanhua.com/web/comic/252117/
 mangakakalot.com    https://mangakakalot.com/chapter/bd921300/chapter_23
