@@ -3,7 +3,7 @@ import time
 from typing import Any
 from os.path import join
 
-from selenium import webdriver
+from seleniumwire import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -111,6 +111,15 @@ class Browser:
 
     def title(self):
         return self.driver.title
+
+    def requests(self):
+        return self.driver.requests
+
+    def clear_requests(self):
+        del self.driver.requests
+
+    def current_url(self):
+        return self.driver.current_url
 
     @log
     def save_images_from_bytes(self, path: str, list_bytes: list, title: str) -> None:
