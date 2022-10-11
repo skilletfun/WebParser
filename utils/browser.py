@@ -132,7 +132,7 @@ class Browser:
         self.clear_requests()
 
     @log
-    def scroll_page(self, element: str, check: Callable):
+    def scroll_page(self, element: str, check: Callable) -> None:
         length = int(self.execute('return ' + element + '.length;'))
         # Первый круг прогрузки
         for i in range(length):
