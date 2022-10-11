@@ -141,7 +141,7 @@ class Worker(QObject):
     def driver_placeholder(self, browser: Browser, url: str) -> None:
         for i in range(0, self.chapters_count, self.step):
             script = "document.getElementById('comicContain').getElementsByTagName('img')"
-            scroll_check = lambda j: browser.execute('return '+script + f'[{j}].src;').endswith('pixel.gif')
+            scroll_check = lambda j: browser.execute('return '+script + f'[{j}].getAttribute("class");') != 'loaded'
             images = lambda: [el.get_attribute('src') for el in browser.execute('return '+script+';')]
             title = self.base_driver_parse(url, browser, 'https://manhua.acimg.cn/manhua_detail/', images, script, scroll_check)
             url = browser.execute("return document.getElementById('nextChapter').href;")
