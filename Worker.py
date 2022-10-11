@@ -18,7 +18,7 @@ class Worker(QObject):
         self.chapters_count, self.step = self.fix_chapter_count(chapters_count)
 
         self.SITES = {
-            'ac.qq.com': self.ac_qq_com,
+            'ac.qq.com': self.driver_placeholder,
             'bomtoon.com': None,
             'comic.naver.com': self.comic_naver_com,
             'comico.kr': None,
@@ -30,7 +30,7 @@ class Worker(QObject):
             'mangareader.to': None,
             'manhuadb.com': None,
             'mechacomic.jp': None,
-            'page.kakao.com': self.driver_placeholder,
+            'page.kakao.com': self.page_kakao_com,
             'rawdevart.com': self.rawdevart_com,
             'ridibooks.com': self.ridibooks_com,
             'webmota.com': self.webmota_com,
@@ -123,10 +123,10 @@ class Worker(QObject):
         title = browser.execute("return document.title;")
         self.parser.current_title = title
         browser.scroll_page(scroll_element, scroll_check)
-        reqs = list(set(filter(lambda x: reqs_filter in x.url, browser.requests())))
+        reqs = list(set(filter(lambda x: reqs_filter in x.url, browser.requests()))) # Отфильтрованные запросы
         self.parser.total_images = len(reqs)
         images_in_bytes = []
-        filtered_images = filtered_images()
+        filtered_images = filtered_images() # Ссылки на картинки из html-документа
         for i in range(len(filtered_images)):
             for j in range(len(reqs)):
                 if filtered_images[i] in reqs[j].url:
@@ -139,15 +139,11 @@ class Worker(QObject):
 
     @log
     def driver_placeholder(self, browser: Browser, url: str) -> None:
-        images.append(browser.execute('return ' + script + f'[{i}].src;'))
-
-        images = images[:1] + images[2:]
-
         for i in range(0, self.chapters_count, self.step):
-            script = "return document.getElementById('comicContain').getElementsByTagName('img')"
-            scroll_check = lambda: browser.execute('return ' + script + f'[{i}].src;').endswith('pixel.gif')
-            images = lambda: [el.get_attribute('src') for el in browser.execute(script+';')]
-            title = self.base_driver_parse(url, browser, '', images, script, scroll_check)
+            script = "document.getElementById('comicContain').getElementsByTagName('img')"
+            scroll_check = lambda j: browser.execute('return '+script + f'[{j}].src;').endswith('pixel.gif')
+            images = lambda: [el.get_attribute('src') for el in browser.execute('return '+script+';')]
+            title = self.base_driver_parse(url, browser, 'https://manhua.acimg.cn/manhua_detail/', images, script, scroll_check)
             url = browser.execute("return document.getElementById('nextChapter').href;")
 
     @log
