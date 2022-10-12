@@ -14,7 +14,7 @@ from utils import file_transform
 
 
 class basic_parser(QObject):
-    def __init__(self):
+    def __init__(self) -> None:
         super(basic_parser, self).__init__()
         # Статистика для загрузчика в QML
         self.total_images = 0
@@ -73,21 +73,13 @@ class basic_parser(QObject):
 
     @log
     def find_images(self, src: str, tag_type: str, ttfs: str, value_of_ttfs: str, tag: str=None) -> Tuple[str, list]:
-        """ Находит в разметке ссылки на картинки. """
+        """ Находит в разметке ссылки на картинки и возвращает список с картинками и название главы.  """
         soup = bs(src, "lxml")
         title_page = soup.find('title').text
         images = soup.find(tag_type, {ttfs: value_of_ttfs})
         tag = tag if tag else 'img' 
         images = images.find_all(tag)
         return title_page, images
-
-    @log
-    def find_tilte(self, format_str=None):
-        title_page = soup.find('title').text
-        if format_str:
-            title_page = format_str(title_page)
-        return title_page
-
 
     @log
     def download_images(self, images: list) -> None:
@@ -110,6 +102,7 @@ class basic_parser(QObject):
 
     @log
     def full_download(self, images: list, title: str) -> None:
+        """ Базовая полная загрузка. """
         self.current_title = title
         self.total_images = len(images)
         self.total_download_images = 0
