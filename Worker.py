@@ -17,7 +17,7 @@ class Worker(QObject):
         self.chapters_count, self.step = self.fix_chapter_count(chapters_count)
 
         self.SITES = {
-            'ac.qq.com': self.driver_placeholder,
+            'ac.qq.com': self.ac_qq_com,
             'bomtoon.com': None,
             'comic.naver.com': self.comic_naver_com,
             'comico.kr': None,
@@ -25,7 +25,7 @@ class Worker(QObject):
             'kuaikanmanhua.com': self.kuaikanmanhua_com,
             'king-manga.com': self.king_manga_com,
             'manga.bilibili.com': None,
-            'mangakakalot.com': self.mangakakalot_com,
+            'mangakakalot.com': None,
             'mangareader.to': None,
             'manhuadb.com': None,
             'mechacomic.jp': None,
@@ -33,7 +33,7 @@ class Worker(QObject):
             'rawdevart.com': self.rawdevart_com,
             'ridibooks.com': self.ridibooks_com,
             'webmota.com': self.webmota_com,
-            'webtoons.com': self.webtoons_com
+            'webtoons.com': None
         }
 
     @pyqtSlot()
@@ -141,10 +141,12 @@ class Worker(QObject):
     def driver_placeholder(self, browser: Browser, url: str) -> None:
         for _ in range(0, self.chapters_count, self.step):
             script = "document.getElementById('comicContain').getElementsByTagName('img')"
-            scroll_check = lambda j: browser.execute('return '+script + f'[{j}].getAttribute("class");') != 'loaded'
+            scroll_check = lambda j: browser.execute('return '+script + f'[{j}].getAttribute("class");') not in ['loaded', 'network-slow'] and \
+                                     browser.execute('return '+script + f'[{j}].getAttribute("id");') != 'adTop'
             images = lambda: [el.get_attribute('src') for el in browser.execute('return '+script+';')]
             title = self.base_driver_parse(url, browser, 'https://manhua.acimg.cn/manhua_detail/', images, script, scroll_check)
             url = browser.execute("return document.getElementById('nextChapter').href;")
+            if self.parser.current_title == title: break
 
     #################----------
     #################   PARSERS
@@ -162,67 +164,51 @@ class Worker(QObject):
 
     @log
     def ac_qq_com(self, browser: Browser, url: str) -> None:
-        old_title = ''
-        self.parser = basic_parser()
-        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
-        browser.get(url)
-        while True:
-            self.chapters_count -= step
-            title = browser.title()
-            if title == old_title: break
+        for _ in range(0, self.chapters_count, self.step):
             script = "document.getElementById('comicContain').getElementsByTagName('img')"
-            length = int(browser.execute('return ' + script + '.length;'))
-            images = []
-            for i in range(length):
-                browser.execute(script + f'[{i}].scrollIntoView();')
-                time.sleep(0.5)
-            for i in range(length):
-                browser.execute(script + f'[{i}].scrollIntoView();')
-                while browser.execute('return ' + script + f'[{i}].src;').endswith('pixel.gif'):
-                    continue
-                images.append(browser.execute('return ' + script + f'[{i}].src;'))
-            images = images[:1] + images[2:]
-            self.parser.full_download(images, title)
-            if self.chapters_count > 0:
-                browser.get(browser.execute("return document.getElementById('nextChapter').href;"))
-            else: break
+            scroll_check = lambda j: browser.execute('return '+script + f'[{j}].getAttribute("class");') not in ['loaded', 'network-slow'] and \
+                                     browser.execute('return '+script + f'[{j}].getAttribute("id");') != 'adTop'
+            images = lambda: [el.get_attribute('src') for el in browser.execute('return '+script+';')]
+            title = self.base_driver_parse(url, browser, 'https://manhua.acimg.cn/manhua_detail/', images, script, scroll_check)
+            url = browser.execute("return document.getElementById('nextChapter').href;")
+            if self.parser.current_title == title: break
 
-    @log
-    def webtoons_com(self, browser: Browser, url: str) -> None:
-        #
-        #   NEED FIX (ACCESS DENIED)
-        #
-        self.parser = basic_parser()
-        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
-        while True:
-            self.chapters_count -= step
-            src = self.parser.get_response(url)
-            title, images = self.parser.find_images(src, 'div', 'id', '_imageList')
-            images = [img.get('data-url') for img in images]
-            self.parser.full_download(images, title)
-            if self.chapters_count > 0:
-                res = self.parser.find_element(src, 'a', 'class', '_nextEpisode')
-                if not (url := res.get('href')): break
-            else: break
+    # @log
+    # def webtoons_com(self, browser: Browser, url: str) -> None:
+    #     #
+    #     #   NEED FIX (ACCESS DENIED)
+    #     #
+    #     self.parser = basic_parser()
+    #     url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
+    #     while True:
+    #         self.chapters_count -= step
+    #         src = self.parser.get_response(url)
+    #         title, images = self.parser.find_images(src, 'div', 'id', '_imageList')
+    #         images = [img.get('data-url') for img in images]
+    #         self.parser.full_download(images, title)
+    #         if self.chapters_count > 0:
+    #             res = self.parser.find_element(src, 'a', 'class', '_nextEpisode')
+    #             if not (url := res.get('href')): break
+    #         else: break
 
-    @log
-    def mangakakalot_com(self, browser: Browser, url: str) -> None:
-        #
-        #   NEED FIX (ACCESS DENIED)
-        #
-        self.parser = basic_parser()
-        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
-        while True:
-            self.chapters_count -= step
-            src = self.parser.get_response(url)
-            title, images = self.parser.find_images(src, 'div', 'class', 'container-chapter-reader')
-            images = [img.get('src') for img in images]
-            self.parser.full_download(images, title)
-            if self.chapters_count > 0:
-                res = bs(src, 'lxml').find_all('a', {'class': 'back'})[-1]
-                if res: url = res.get('href')
-                else: break
-            else: break
+    # @log
+    # def mangakakalot_com(self, browser: Browser, url: str) -> None:
+    #     #
+    #     #   NEED FIX (ACCESS DENIED)
+    #     #
+    #     self.parser = basic_parser()
+    #     url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
+    #     while True:
+    #         self.chapters_count -= step
+    #         src = self.parser.get_response(url)
+    #         title, images = self.parser.find_images(src, 'div', 'class', 'container-chapter-reader')
+    #         images = [img.get('src') for img in images]
+    #         self.parser.full_download(images, title)
+    #         if self.chapters_count > 0:
+    #             res = bs(src, 'lxml').find_all('a', {'class': 'back'})[-1]
+    #             if res: url = res.get('href')
+    #             else: break
+    #         else: break
 
     @log
     def comic_naver_com(self, browser: Browser, url: str) -> None:
