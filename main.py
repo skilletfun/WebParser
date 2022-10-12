@@ -12,6 +12,10 @@ from Web_parser import Web_parser
 
 
 if __name__ == "__main__":
+    if os.path.exists("logfile.log"):
+        if os.path.getsize("logfile.log") > 1000000:
+            os.remove("logfile.log")
+
     app = QGuiApplication(sys.argv)
     engine = QQmlApplicationEngine()
 

@@ -41,9 +41,10 @@ class Web_parser(QObject):
     def cancel_download(self) -> None:
         """ Прерывает загрузку. """
         if self.worker:
-            self.my_thread.quit()
-            self.my_thread = None
-            self.worker = None
+            pass
+            # self.my_thread.deleteLater()
+            # self.my_thread = None
+            # self.worker = None
 
     @pyqtSlot(result=int)
     def get_total_images(self) -> int:
