@@ -2,18 +2,17 @@ import time
 from typing import Callable, Tuple
 
 from PyQt5.QtCore import pyqtSlot, QObject
-from selenium.webdriver.common.by import By
 
-from basic_parser import basic_parser
 from utils.logging import log
 from utils.browser import Browser
+from basic_parser import basic_parser
 from config import SYMBOLS_FOR_DELETE, SCROOL_DELAY
 
 
 class Worker(QObject):
-    def __init__(self, url, chapters_count) -> None:
+    def __init__(self, url: str, chapters_count: str) -> None:
         super(Worker, self).__init__()
-        self.url = url
+        self.url = 'https://' + url if not url.startswith('http') else url
         self.chapters_count, self.step = self.fix_chapter_count(chapters_count)
 
         self.SITES = {
@@ -43,8 +42,7 @@ class Worker(QObject):
             self.url = self.url[SYMBOLS_FOR_DELETE:]
             with open(self.url, "r") as f:
                 urls = f.read().split('\n')
-                if urls[-1] in ['\n', '']:
-                    urls.pop()
+                if urls[-1] in ['\n', '']: urls.pop()
         else: urls = [self.url]
         browser = None
         for url in urls:
@@ -89,8 +87,6 @@ class Worker(QObject):
 
     @log
     def base_bs_parse(self, url: str, get_images: Callable, tag: str, break_check: Callable, browser: Browser=None):
-        if not url.startswith('http'):
-            url = 'https://' + url
         self.parser = basic_parser()
         src = self.parser.get_response(url) if not browser else browser.get(url)
         if break_check(): return False
@@ -115,8 +111,6 @@ class Worker(QObject):
             scroll_element: str=None,
             scroll_check: Callable=None
     ) -> str:
-        if not url.startswith('http'):
-            url = 'https://' + url
         self.parser = basic_parser()
         browser.get(url)
         time.sleep(3)
@@ -148,9 +142,9 @@ class Worker(QObject):
             url = browser.execute("return document.getElementById('nextChapter').href;")
             if self.parser.current_title == title: break
 
-    #################----------
-    #################   PARSERS
-    #################----------
+    #------------------------------
+    #----------   PARSERS   -------
+    #------------------------------
 
     @log
     def page_kakao_com(self, browser: Browser, url: str) -> None:
