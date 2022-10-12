@@ -1,18 +1,13 @@
 import time
 from typing import Callable, Tuple
 
-import requests
 from PyQt5.QtCore import pyqtSlot, QObject
 from selenium.webdriver.common.by import By
 
-<<<<<<< HEAD
-from utils.basic_parser import basic_parser
-=======
 from basic_parser import basic_parser
->>>>>>> 9bcc6d350dfa86c933c3f36dad09c0ceb7ab6926
 from utils.logging import log
 from utils.browser import Browser
-from config import SYMBOLS_FOR_DELETE, HEADERS, SCROOL_DELAY
+from config import SYMBOLS_FOR_DELETE, SCROOL_DELAY
 
 
 class Worker(QObject):
@@ -35,15 +30,9 @@ class Worker(QObject):
             'manhuadb.com': None,
             'mechacomic.jp': None,
             'page.kakao.com': self.page_kakao_com,
-<<<<<<< HEAD
-            'rawdevart.com': None,
-            'ridibooks.com': None,
-            'webmota.com': None,
-=======
             'rawdevart.com': self.rawdevart_com,
             'ridibooks.com': self.ridibooks_com,
             'webmota.com': self.webmota_com,
->>>>>>> 9bcc6d350dfa86c933c3f36dad09c0ceb7ab6926
             'webtoons.com': self.webtoons_com
         }
 
@@ -66,13 +55,8 @@ class Worker(QObject):
                     self.SITES[site](browser, url)
                     time.sleep(1)
                     break
-<<<<<<< HEAD
-        if browser:
-            browser.shutdown()
-=======
             time.sleep(1)
         if browser: browser.shutdown()
->>>>>>> 9bcc6d350dfa86c933c3f36dad09c0ceb7ab6926
         self.running = False
 
     @log
@@ -117,7 +101,7 @@ class Worker(QObject):
 
     @log
     def bs_placeholder(self, browser: Browser, url: str) -> None:
-        for i in range(0, self.chapters_count, self.step):
+        for _ in range(0, self.chapters_count, self.step):
             get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'wt_viewer')
             self.base_bs_parse(url, get_images, 'src', lambda: 'list?titleId' in browser.current_url(), browser)
 
@@ -155,7 +139,7 @@ class Worker(QObject):
 
     @log
     def driver_placeholder(self, browser: Browser, url: str) -> None:
-        for i in range(0, self.chapters_count, self.step):
+        for _ in range(0, self.chapters_count, self.step):
             script = "document.getElementById('comicContain').getElementsByTagName('img')"
             scroll_check = lambda j: browser.execute('return '+script + f'[{j}].getAttribute("class");') != 'loaded'
             images = lambda: [el.get_attribute('src') for el in browser.execute('return '+script+';')]
@@ -168,7 +152,7 @@ class Worker(QObject):
 
     @log
     def page_kakao_com(self, browser: Browser, url: str) -> None:
-        for i in range(0, self.chapters_count, self.step):
+        for _ in range(0, self.chapters_count, self.step):
             script = "return document.getElementsByClassName('css-3q7n7r-ScrollImageViewerImage');"
             images = lambda: [el.get_attribute('src') for el in browser.execute(script)]
             title = self.base_driver_parse(url, browser, 'https://page-edge.kakao.com/sdownload', images)
@@ -242,7 +226,7 @@ class Worker(QObject):
 
     @log
     def comic_naver_com(self, browser: Browser, url: str) -> None:
-        for i in range(0, self.chapters_count, self.step):
+        for _ in range(0, self.chapters_count, self.step):
             if 'weekday' in url:
                 url = url[:url.find('weekday') - 1]
             get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'wt_viewer')
@@ -251,7 +235,7 @@ class Worker(QObject):
 
     @log
     def webmota_com(self, browser: Browser, url: str) -> None:
-        for i in range(0, self.chapters_count, self.step):
+        for _ in range(0, self.chapters_count, self.step):
             get_images = lambda src: self.parser.find_images(src, 'ul', 'class', 'comic-contain', tag='amp-img')
             page_src = self.base_bs_parse(url, get_images, 'src', lambda: False)
             res = self.parser.find_element(page_src, 'div', 'class', 'bottom-bar-tool').find_all('a')[3]
@@ -259,7 +243,7 @@ class Worker(QObject):
 
     @log
     def king_manga_com(self, browser: Browser, url: str) -> None:
-        for i in range(0, self.chapters_count, self.step):
+        for _ in range(0, self.chapters_count, self.step):
             get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'reading-content')
             page_src = self.base_bs_parse(url, get_images, 'src', lambda: False)
             res = self.find_element(page_src, 'a', 'class', 'next_page')
@@ -267,7 +251,7 @@ class Worker(QObject):
 
     @log
     def kuaikanmanhua_com(self, browser: Browser, url: str) -> None:
-        for i in range(0, self.chapters_count, self.step):
+        for _ in range(0, self.chapters_count, self.step):
             get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'imgList')
             page_src = self.base_bs_parse(url, get_images, 'data-src', lambda: False, browser)
             res = self.parser.find_element(page_src, 'div', 'class', 'AdjacentChapters').find_all('a')[-1]
@@ -276,7 +260,6 @@ class Worker(QObject):
     @log
     def rawdevart_com(self, browser: Browser, url: str) -> None:
         self.parser = basic_parser()
-        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
         src = self.parser.get_response(url)
         title, images = self.parser.find_images(src, 'div', 'id', 'img-container')
         images = [img.get('data-src') for img in images]
@@ -316,24 +299,3 @@ class Worker(QObject):
                 self.try_next_chapter(browser, s_next, title)
                 url = browser.current_url()
             else: break
-<<<<<<< HEAD
-
-    @log
-    def webtoons_com(self, browser: Browser, url: str) -> None:
-        self.parser = basic_parser()
-        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
-        while True:
-            self.chapters_count -= step
-            src = self.parser.get_response(url)
-            title, images = self.parser.find_images(src, 'div', 'id', '_imageList')
-            images = [img.get('data-url') for img in images]
-            self.parser.full_download(images, title)
-            if self.chapters_count > 0:
-                res = self.parser.find_element(src, 'a', 'class', '_nextEpisode')
-                if res: url = res.get('href')
-                else: break
-            else: break
-
-    
-=======
->>>>>>> 9bcc6d350dfa86c933c3f36dad09c0ceb7ab6926
