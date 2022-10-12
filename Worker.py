@@ -87,6 +87,13 @@ class Worker(QObject):
 
     @log
     def base_bs_parse(self, url: str, get_images: Callable, tag: str, break_check: Callable, browser: Browser=None):
+        """ Запрашивает страницу, а затем сохраняет картинки, запрашивая их через ссылки в разметке.
+        :param url: ссылка на страницу (главу)
+        :param get_images: лямбда, которая получит ссылки на картинки в html-разметке
+        :param tag: свойство, в котором находится ссылка на картинку (обычно <src>)
+        :param break_check: лямбда, которая проверит, нужно ли качать эту страницу (дубликат)
+        :param browser: объект браузера, если нужно отрендерить js перед поиском ссылок
+        """
         self.parser = basic_parser()
         src = self.parser.get_response(url) if not browser else browser.get(url)
         if break_check(): return False
@@ -103,20 +110,29 @@ class Worker(QObject):
 
     @log
     def base_driver_parse(
-            self,
-            url: str,
-            browser: Browser,
-            reqs_filter: str,
-            filtered_images: Callable,
-            scroll_element: str=None,
-            scroll_check: Callable=None
+        self,
+        url: str,
+        browser: Browser,
+        reqs_filter: str,
+        filtered_images: Callable,
+        scroll_element: str=None,
+        scroll_check: Callable=None
     ) -> str:
+        """ Прогружает страницу в браузере, а затем сохраняет картинки, полученые через запросы, перехватывая их.
+        :param url: ссылка на страницу (главу)
+        :param browser: объект уже запущенного браузера
+        :param reqs_filter: строка, с которой должны начинаться запросы к картинкам (по ней произойдет фильтрация)
+        :param filtered_images: лямбда, которая получит ссылки на картинки в html-разметке
+        :param scroll_element: строка (js-код), который представляет путь до прокручиваемых элементов
+        :param scroll_check: лямбда, которая проверит, прогружен ли элемент
+        """
         self.parser = basic_parser()
         browser.get(url)
         time.sleep(3)
         title = browser.execute("return document.title;")
         self.parser.current_title = title
-        browser.scroll_page(scroll_element, scroll_check)
+        if scroll_check and scroll_element:
+            browser.scroll_page(scroll_element, scroll_check) # Прокрутка страницы
         reqs = list(set(filter(lambda x: reqs_filter in x.url, browser.requests()))) # Отфильтрованные запросы
         self.parser.total_images = len(reqs)
         images_in_bytes = []
@@ -165,7 +181,6 @@ class Worker(QObject):
             images = lambda: [el.get_attribute('src') for el in browser.execute('return '+script+';')]
             title = self.base_driver_parse(url, browser, 'https://manhua.acimg.cn/manhua_detail/', images, script, scroll_check)
             url = browser.execute("return document.getElementById('nextChapter').href;")
-            if self.parser.current_title == title: break
 
     # @log
     # def webtoons_com(self, browser: Browser, url: str) -> None:
