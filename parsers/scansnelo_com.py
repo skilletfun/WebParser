@@ -1,4 +1,4 @@
-from parsers.basic_parser import basic_parser
+from utils.basic_parser import basic_parser
 
 
 class scansnelo_com(basic_parser):

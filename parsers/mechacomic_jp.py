@@ -2,7 +2,7 @@ import time
 
 from selenium.webdriver.common.by import By
 
-from parsers.basic_parser import basic_parser
+from utils.basic_parser import basic_parser
 #https://mechacomic.jp/viewer/index.html?colophon=https%3A%2F%2Fmechacomic.jp%2Ffree_chapters%2F2086938%2Fcolophon%3Fback_path%3D%252Fbooks%252F157299%26v%3D2%26vertical%3Don&colophon_size=320_340&contents_vertical=https%3A%2F%2Fc.cnt.mechacomic.jp%2Fviewer%2Fdata%2F2141%2Fakujonanonimama_001_a_wt%2Fcontents_vertical.json&cryptokey=https%3A%2F%2Fmechacomic.jp%2Fviewer_cryptokey%2Ffree_chapter%2F2086938&directory=https%3A%2F%2Fc.cnt.mechacomic.jp%2Fviewer%2Fdata%2F2141%2Fakujonanonimama_001_a_wt%2F&ga_params=%7B%22mbr%22%3A%220%22%2C%22lgn%22%3A%220%22%2C%22bid%22%3A157299%2C%22cno%22%3A1%7D&help=https%3A%2F%2Fmechacomic.jp%2Finfo%2Fviewer_help2&icon=https%3A%2F%2Fc.mechacomic.jp%2Fimages%2Fparts%2Fviewer_ui_icons.png&logo=https%3A%2F%2Fc.mechacomic.jp%2Fimages%2Fparts%2Fviewer_new_logo_white.png&margin=0&popup=https%3A%2F%2Fmechacomic.jp%2Ffree_chapters%2F2086938%2Fcolophon%3Fback_path%3D%252Fbooks%252F157299%26v%3D2%26vertical%3Don&popup_size=320_340&return_to=https%3A%2F%2Fmechacomic.jp%2Fbooks%2F157299&ver=b9581a6959311d178c76dac57643f8d5&viewer=vertical
 
 class mechacomic_jp(basic_parser):
