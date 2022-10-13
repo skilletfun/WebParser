@@ -144,7 +144,7 @@ Rectangle {
                     '© comico.kr (+ paid)',
                     '© fanfox.net',
                     '© kuaikanmanhua.com',
-                    'king-manga.com'
+                    'king-manga.com',
                     '© manga.bilibili.com',
                     'mangakakalot.com',
                     '© mangareader.to',
