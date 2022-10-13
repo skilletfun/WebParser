@@ -189,14 +189,13 @@ class Worker(QObject):
         return f'https://page.kakao.com/content/{title}/viewer/' + part_url if flag else ''
 
     @log
-    def ac_qq_com(self, browser: Browser, url: str) -> None:
-        for _ in range(0, self.chapters_count, self.step):
-            script = "document.getElementById('comicContain').getElementsByTagName('img')"
-            scroll_check = lambda j: browser.execute('return '+script + f'[{j}].getAttribute("class");') not in ['loaded', 'network-slow'] and \
-                                     browser.execute('return '+script + f'[{j}].getAttribute("id");') != 'adTop'
-            images = lambda: [el.get_attribute('src') for el in browser.execute('return '+script+';')]
-            title = self.base_driver_parse(url, browser, 'https://manhua.acimg.cn/manhua_detail/', images, script, scroll_check)
-            url = browser.execute("return document.getElementById('nextChapter').href;")
+    def ac_qq_com(self, browser: Browser, url: str) -> str:
+        script = "document.getElementById('comicContain').getElementsByTagName('img')"
+        scroll_check = lambda j: browser.execute('return '+script + f'[{j}].getAttribute("class");') not in ['loaded', 'network-slow'] and \
+                                 browser.execute('return '+script + f'[{j}].getAttribute("id");') != 'adTop'
+        images = lambda: [el.get_attribute('src') for el in browser.execute('return '+script+';')]
+        flag = self.base_driver_parse(url, browser, 'https://manhua.acimg.cn/manhua_detail/', images, script, scroll_check)
+        return browser.execute("return document.getElementById('nextChapter').href;") if flag else ''
 
     # @log
     # def webtoons_com(self, browser: Browser, url: str) -> None:
@@ -236,37 +235,33 @@ class Worker(QObject):
     #         else: break
 
     @log
-    def comic_naver_com(self, browser: Browser, url: str) -> None:
-        for _ in range(0, self.chapters_count, self.step):
-            if 'weekday' in url:
-                url = url[:url.find('weekday') - 1]
-            get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'wt_viewer')
-            self.base_bs_parse(url, get_images, 'src', lambda: 'list?titleId' in browser.current_url(), browser)
-            url = url[:url.rfind('=') + 1] + str(int(url[url.rfind('=') + 1:]) + 1)
+    def comic_naver_com(self, browser: Browser, url: str) -> str:
+        if 'weekday' in url:
+            url = url[:url.find('weekday') - 1]
+        get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'wt_viewer')
+        self.base_bs_parse(url, get_images, 'src', lambda: 'list?titleId' in browser.current_url(), browser)
+        return url[:url.rfind('=') + 1] + str(int(url[url.rfind('=') + 1:]) + 1)
 
     @log
-    def webmota_com(self, browser: Browser, url: str) -> None:
-        for _ in range(0, self.chapters_count, self.step):
-            get_images = lambda src: self.parser.find_images(src, 'ul', 'class', 'comic-contain', tag='amp-img')
-            page_src = self.base_bs_parse(url, get_images, 'src', lambda: False)
-            res = self.parser.find_element(page_src, 'div', 'class', 'bottom-bar-tool').find_all('a')[3]
-            if not (url := res.get('href')): break
+    def webmota_com(self, browser: Browser, url: str) -> str:
+        get_images = lambda src: self.parser.find_images(src, 'ul', 'class', 'comic-contain', tag='amp-img')
+        page_src = self.base_bs_parse(url, get_images, 'src', lambda: False)
+        res = self.parser.find_element(page_src, 'div', 'class', 'bottom-bar-tool').find_all('a')[3].get('href')
+        return res if res else None
 
     @log
-    def king_manga_com(self, browser: Browser, url: str) -> None:
-        for _ in range(0, self.chapters_count, self.step):
-            get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'reading-content')
-            page_src = self.base_bs_parse(url, get_images, 'src', lambda: False)
-            res = self.find_element(page_src, 'a', 'class', 'next_page')
-            if not (url := res.get('href')): break
+    def king_manga_com(self, browser: Browser, url: str) -> str:
+        get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'reading-content')
+        page_src = self.base_bs_parse(url, get_images, 'src', lambda: False)
+        res = self.find_element(page_src, 'a', 'class', 'next_page').get('href')
+        return res if res else None
 
     @log
-    def kuaikanmanhua_com(self, browser: Browser, url: str) -> None:
-        for _ in range(0, self.chapters_count, self.step):
-            get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'imgList')
-            page_src = self.base_bs_parse(url, get_images, 'data-src', lambda: False, browser)
-            res = self.parser.find_element(page_src, 'div', 'class', 'AdjacentChapters').find_all('a')[-1]
-            if 'javascript' not in res: url = 'https://www.kuaikanmanhua.com' + res.get('href')
+    def kuaikanmanhua_com(self, browser: Browser, url: str) -> str:
+        get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'imgList')
+        page_src = self.base_bs_parse(url, get_images, 'data-src', lambda: False, browser)
+        res = self.parser.find_element(page_src, 'div', 'class', 'AdjacentChapters').find_all('a')[-1]
+        return 'https://www.kuaikanmanhua.com' + res.get('href') if 'javascript' not in res else None
 
     @log
     def rawdevart_com(self, browser: Browser, url: str) -> None:
