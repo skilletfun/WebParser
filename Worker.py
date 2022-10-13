@@ -1,3 +1,4 @@
+import json
 import time
 from typing import Callable, Tuple
 
@@ -46,11 +47,16 @@ class Worker(QObject):
         else: urls = [self.url]
         browser = None
         for url in urls:
+            counter = self.chapters_count # Счетчик обнуляется для каждой новой ссылки (если указан файл со ссылками)
             for site in self.SITES.keys():
                 if site in url:
-                    browser = Browser()
+                    if not browser:
+                        browser = Browser()
                     time.sleep(0.5)
-                    self.SITES[site](browser, url)
+                    # Будут парситься главы по порядку до тех пор, пока не появится битая ссылка или не кончится счетчик 
+                    while url and counter:
+                        url = self.SITES[site](browser, url)
+                        counter -= self.step
                     time.sleep(1)
                     break
             time.sleep(1)
@@ -75,8 +81,9 @@ class Worker(QObject):
                 self.chapters_count -= 1
 
     @log
-    def fix_chapter_count(self, chapter_count: str) -> Tuple[str, int]:
-        """ Преобразует переменные в корректный вид. """
+    def fix_chapter_count(self, chapter_count: str) -> Tuple[int, int]:
+        """ Преобразует строку с количеством глав в корректный вид и
+        возвращает количество глав и шаг, на который оно будет уменьшаться. """
         if chapter_count != '*':
             chapter_count = 1 if chapter_count == '' else int(chapter_count)
             step = 1
@@ -117,7 +124,7 @@ class Worker(QObject):
         filtered_images: Callable,
         scroll_element: str=None,
         scroll_check: Callable=None
-    ) -> str:
+    ) -> None:
         """ Прогружает страницу в браузере, а затем сохраняет картинки, полученые через запросы, перехватывая их.
         :param url: ссылка на страницу (главу)
         :param browser: объект уже запущенного браузера
@@ -145,42 +152,41 @@ class Worker(QObject):
                     break
         browser.save_images_from_bytes(self.parser.prepare_save_folder(title), images_in_bytes)
         self.parser.total_download_images = len(reqs)
-        return title
+        return True
 
     @log
     def driver_placeholder(self, browser: Browser, url: str) -> None:
         for _ in range(0, self.chapters_count, self.step):
             script = "document.getElementById('comicContain').getElementsByTagName('img')"
-            scroll_check = lambda j: browser.execute('return '+script + f'[{j}].getAttribute("class");') not in ['loaded', 'network-slow'] and \
-                                     browser.execute('return '+script + f'[{j}].getAttribute("id");') != 'adTop'
+            scroll_check = lambda j: browser.execute('return ' + script + f'[{j}].getAttribute("class");') not in ['loaded', 'network-slow'] and \
+                                     browser.execute('return ' + script + f'[{j}].getAttribute("id");') != 'adTop'
             images = lambda: [el.get_attribute('src') for el in browser.execute('return '+script+';')]
             title = self.base_driver_parse(url, browser, 'https://manhua.acimg.cn/manhua_detail/', images, script, scroll_check)
             url = browser.execute("return document.getElementById('nextChapter').href;")
             if self.parser.current_title == title: break
 
     def wait_reqs(self, browser: Browser, filter_func: Callable) -> list:
+        """ Ожидает ответов на все запросы. """
         length = 0
         arr = list(set(filter(lambda x: filter_func in x.url, browser.requests())))
         while len(arr) > length:
-            print('Wait 3 secs')
             length = len(arr)
             time.sleep(3)
             arr = list(set(filter(lambda x: filter_func in x.url, browser.requests())))
         return arr
 
-    #---------------------------------
-    #----------   PARSERS   ----------
-    #---------------------------------
+    #               ---------------------------------
+    #               ----------   PARSERS   ----------
+    #               ---------------------------------
 
     @log
-    def page_kakao_com(self, browser: Browser, url: str) -> None:
-        for _ in range(0, self.chapters_count, self.step):
-            script = "return document.getElementsByClassName('css-3q7n7r-ScrollImageViewerImage');"
-            images = lambda: [el.get_attribute('src') for el in browser.execute(script)]
-            title = self.base_driver_parse(url, browser, 'https://page-edge.kakao.com/sdownload', images)
-            s_next = "document.getElementsByClassName('linkItem')[3].click();"
-            s_title = "return document.title;"
-            self.try_next_chapter(browser, s_next, title, s_title)
+    def page_kakao_com(self, browser: Browser, url: str) -> str:
+        script = "return document.getElementsByClassName('css-3q7n7r-ScrollImageViewerImage');"
+        images = lambda: [el.get_attribute('src') for el in browser.execute(script)]
+        flag = self.base_driver_parse(url, browser, 'https://page-edge.kakao.com/sdownload', images)
+        part_url = json.loads(browser.execute("return document.getElementsByClassName('css-1gzfypn-ViewerNavbarMenu')[0].getAttribute('data-t-obj');"))['eventMeta']['id']
+        title = json.loads(browser.execute("return document.getElementById('__NEXT_DATA__').text;"))['props']['pageProps']['seriesId']
+        return f'https://page.kakao.com/content/{title}/viewer/' + part_url if flag else ''
 
     @log
     def ac_qq_com(self, browser: Browser, url: str) -> None:
