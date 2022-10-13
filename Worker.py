@@ -133,7 +133,7 @@ class Worker(QObject):
         self.parser.current_title = title
         if scroll_check and scroll_element:
             browser.scroll_page(scroll_element, scroll_check) # Прокрутка страницы
-        reqs = list(set(filter(lambda x: reqs_filter in x.url, browser.requests()))) # Отфильтрованные запросы
+        reqs = self.wait_reqs(browser, reqs_filter) # Отфильтрованные запросы
         self.parser.total_images = len(reqs)
         images_in_bytes = []
         filtered_images = filtered_images() # Ссылки на картинки из html-документа
@@ -158,9 +158,19 @@ class Worker(QObject):
             url = browser.execute("return document.getElementById('nextChapter').href;")
             if self.parser.current_title == title: break
 
-    #------------------------------
-    #----------   PARSERS   -------
-    #------------------------------
+    def wait_reqs(self, browser: Browser, filter_func: Callable) -> list:
+        length = 0
+        arr = list(set(filter(lambda x: filter_func in x.url, browser.requests())))
+        while len(arr) > length:
+            print('Wait 3 secs')
+            length = len(arr)
+            time.sleep(3)
+            arr = list(set(filter(lambda x: filter_func in x.url, browser.requests())))
+        return arr
+
+    #---------------------------------
+    #----------   PARSERS   ----------
+    #---------------------------------
 
     @log
     def page_kakao_com(self, browser: Browser, url: str) -> None:
