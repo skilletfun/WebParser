@@ -28,5 +28,5 @@ def log(func):
         except:
             logger = Logger(func.__name__)
             logger.error(traceback.format_exc())
-            return '-'
+            return None
     return wrapper
