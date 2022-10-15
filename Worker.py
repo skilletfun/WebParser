@@ -265,7 +265,7 @@ class Worker(QObject):
         images = lambda: [el.find_element(By.TAG_NAME, 'img').get_attribute('src') for el in browser.execute('return '+script+';')]
         flag = self.base_driver_parse(url, browser, 'https://webview-cache', images, script, scroll_check)
         js = browser.execute("return document.getElementsByTagName('script');")
-        js = [el for el in js if el.get_property('textContent').strip().startswith('window.dispatchEvent')][0]
+        js = [el for el in js if el.get_property('textContent').strip().startswith('window.dispatchEvent')][0].get_property('textContent').strip()
         js = js[js.find('next_book'):]
         js = js[:js.find(',')-1]
         js = js[js.rfind('"')+1:]
