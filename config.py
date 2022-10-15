@@ -30,7 +30,7 @@ REQUESTS_LIMIT = 10
 DOWNLOAD_TRIES = 10
 
 # Задержка в секундах для скролла страницы
-SCROOL_DELAY = 0.2
+SCROOL_DELAY = 0.5
 
 # Версия программы
 VERSION = "v1.8"
