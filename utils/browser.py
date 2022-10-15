@@ -11,6 +11,7 @@ from selenium.webdriver.support.ui import WebDriverWait as Wait
 from selenium.webdriver.support import expected_conditions as EC
 
 from utils.logging import log
+from config import SCROOL_DELAY
 
 
 class Browser:
@@ -137,13 +138,13 @@ class Browser:
         # Первый круг прогрузки
         for i in range(length):
             self.execute(element + f'[{i}].scrollIntoView();')
-            time.sleep(0.5)
+            time.sleep(SCROOL_DELAY)
         # Финальный круг прогрузки. Будет грузиться, пока не прогрузится все
         for i in range(length):
             self.execute(element + f'[{i}].scrollIntoView();')
             # Если условие не выполнено (элемент не прогружен), то попытаться еще раз
             while check(i):
-                time.sleep(0.5)
+                time.sleep(SCROOL_DELAY)
 
     def __del__(self):
         self.shutdown()
