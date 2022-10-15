@@ -3,6 +3,7 @@ import time
 from typing import Callable, Tuple
 
 from PyQt5.QtCore import pyqtSlot, QObject
+from selenium.webdriver.common.by import By
 
 from utils.logging import log
 from utils.browser import Browser
@@ -31,7 +32,7 @@ class Worker(QObject):
             'mechacomic.jp': None,
             'page.kakao.com': self.page_kakao_com,
             'rawdevart.com': self.rawdevart_com,
-            'ridibooks.com': self.ridibooks_com,
+            'ridibooks.com': self.driver_placeholder,
             'webmota.com': self.webmota_com,
             'webtoons.com': None
         }
@@ -62,23 +63,6 @@ class Worker(QObject):
             time.sleep(1)
         if browser: browser.shutdown()
         self.running = False
-
-    @log
-    def try_next_chapter(self, browser: Browser, script_next_chapter: str, title: str, script_title: str=None):
-        """ Попытка загрузить следующую главу. """
-        if self.chapters_count - self.step > 0:
-            old_title = title
-            browser.execute(script_next_chapter)
-            max_wait = 10
-            time.sleep(5)
-            while title == old_title and max_wait > 0:
-                title = browser.execute(script_title) if script_title else browser.title()
-                max_wait -= 1
-                time.sleep(1)
-            # Если все время вышло, уменьшим количество требуемых глав на 1.
-            # Особенно актуально для бесконечной загрузки
-            if max_wait == 0:
-                self.chapters_count -= 1
 
     @log
     def fix_chapter_count(self, chapter_count: str) -> Tuple[int, int]:
@@ -124,7 +108,7 @@ class Worker(QObject):
         filtered_images: Callable,
         scroll_element: str=None,
         scroll_check: Callable=None
-    ) -> None:
+    ) -> bool:
         """ Прогружает страницу в браузере, а затем сохраняет картинки, полученые через запросы, перехватывая их.
         :param url: ссылка на страницу (главу)
         :param browser: объект уже запущенного браузера
@@ -151,22 +135,25 @@ class Worker(QObject):
                     reqs.pop(j)
                     break
         browser.save_images_from_bytes(self.parser.prepare_save_folder(title), images_in_bytes)
-        self.parser.total_download_images = len(reqs)
         return True
 
     @log
-    def driver_placeholder(self, browser: Browser, url: str) -> None:
-        for _ in range(0, self.chapters_count, self.step):
-            script = "document.getElementById('comicContain').getElementsByTagName('img')"
-            scroll_check = lambda j: browser.execute('return ' + script + f'[{j}].getAttribute("class");') not in ['loaded', 'network-slow'] and \
-                                     browser.execute('return ' + script + f'[{j}].getAttribute("id");') != 'adTop'
-            images = lambda: [el.get_attribute('src') for el in browser.execute('return '+script+';')]
-            title = self.base_driver_parse(url, browser, 'https://manhua.acimg.cn/manhua_detail/', images, script, scroll_check)
-            url = browser.execute("return document.getElementById('nextChapter').href;")
-            if self.parser.current_title == title: break
+    def driver_placeholder(self, browser: Browser, url: str) -> bool:
+        script = "document.getElementsByClassName('comic_page lazy_load')"
+        scroll_check = lambda j: 'loaded' not in browser.execute('return ' + script + f'[{j}].classList;')
+        images = lambda: [el.find_element(By.TAG_NAME, 'img').get_attribute('src') for el in browser.execute('return '+script+';')]
+        flag = self.base_driver_parse(url, browser, 'https://webview-cache', images, script, scroll_check)
+        js = browser.execute("return document.getElementsByTagName('script');")
+        js = [el for el in js if el.get_property('textContent').strip().startswith('window.dispatchEvent')][0]
+        js = js[js.find('next_book'):]
+        js = js[:js.find(',')-1]
+        js = js[js.rfind('"')+1:]
+        new_url = 'https://view.ridibooks.com/books/' + js
+        return new_url if flag else False
 
+    @log
     def wait_reqs(self, browser: Browser, filter_func: Callable) -> list:
-        """ Ожидает ответов на все запросы. """
+        """ Ожидает ответа на все запросы. """
         length = 0
         arr = list(set(filter(lambda x: filter_func in x.url, browser.requests())))
         while len(arr) > length:
@@ -272,36 +259,15 @@ class Worker(QObject):
         self.parser.full_download(images, title)
 
     @log
-    def ridibooks_com(self, browser: Browser, url: str) -> None:
-        self.parser = basic_parser()
-        url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
-        old_title = ''
-        base_url = 'document.getElementsByClassName(\'pages\')[0]'
-        while True:
-            browser.get(url)
-            self.chapters_count -= step
-            # load all images by scroll
-            length = browser.execute(f'return {base_url}.getElementsByClassName(\'lazy_load\').length;', tries=10)
-            time_for_check = SCROOL_DELAY
-            while True:
-                for i in range(length):
-                    browser.execute(f'{base_url}.getElementsByClassName(\'lazy_load\')[{i}].scrollIntoView();')
-                    time.sleep(time_for_check)
-                time_for_check /= 2
-                time.sleep(3)
-                if length == browser.execute(f'return {base_url}.getElementsByClassName(\'loaded\').length;'): break
-            # end loading
-
-            title = browser.title()
-            if title == old_title: break
-            sort_names = lambda x: int(x.url[x.url.index('__ridi__') + 8: x.url.index('.jpg?')])
-            sort_urls = lambda x: url[url.rfind('/'):] + '/webtoon/__ridi__' in x.url
-            imgs_in_bytes = [el.response.body for el in sorted(list(filter(sort_urls, browser.requests)), key=sort_names)]
-            browser.save_images_from_bytes(imgs_in_bytes, title)
-            browser.clear_requests()
-
-            if self.chapters_count > 0:
-                s_next = "document.getElementsByClassName('next_button')[0].click();"
-                self.try_next_chapter(browser, s_next, title)
-                url = browser.current_url()
-            else: break
+    def ridibooks_com(self, browser: Browser, url: str) -> bool:
+        script = "document.getElementsByClassName('comic_page lazy_load')"
+        scroll_check = lambda j: 'loaded' not in browser.execute('return ' + script + f'[{j}].classList;')
+        images = lambda: [el.find_element(By.TAG_NAME, 'img').get_attribute('src') for el in browser.execute('return '+script+';')]
+        flag = self.base_driver_parse(url, browser, 'https://webview-cache', images, script, scroll_check)
+        js = browser.execute("return document.getElementsByTagName('script');")
+        js = [el for el in js if el.get_property('textContent').strip().startswith('window.dispatchEvent')][0]
+        js = js[js.find('next_book'):]
+        js = js[:js.find(',')-1]
+        js = js[js.rfind('"')+1:]
+        new_url = 'https://view.ridibooks.com/books/' + js
+        return new_url if flag else None
