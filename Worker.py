@@ -32,7 +32,7 @@ class Worker(QObject):
             'mechacomic.jp': None,
             'page.kakao.com': self.page_kakao_com,
             'rawdevart.com': self.rawdevart_com,
-            'ridibooks.com': self.driver_placeholder,
+            'ridibooks.com': self.ridibooks_com,
             'webmota.com': self.webmota_com,
             'webtoons.com': None
         }
