@@ -1,6 +1,6 @@
 import json
 import time
-from typing import Callable, Tuple
+from typing import Callable, Optional, Tuple
 
 from PyQt5.QtCore import pyqtSlot, QObject
 from selenium.webdriver.common.by import By
@@ -167,22 +167,22 @@ class Worker(QObject):
     #               ---------------------------------
 
     @log
-    def page_kakao_com(self, browser: Browser, url: str) -> str:
+    def page_kakao_com(self, browser: Browser, url: str) -> Optional[str]:
         script = "return document.getElementsByClassName('css-3q7n7r-ScrollImageViewerImage');"
         images = lambda: [el.get_attribute('src') for el in browser.execute(script)]
         flag = self.base_driver_parse(url, browser, 'https://page-edge.kakao.com/sdownload', images)
         part_url = json.loads(browser.execute("return document.getElementsByClassName('css-1gzfypn-ViewerNavbarMenu')[0].getAttribute('data-t-obj');"))['eventMeta']['id']
         title = json.loads(browser.execute("return document.getElementById('__NEXT_DATA__').text;"))['props']['pageProps']['seriesId']
-        return f'https://page.kakao.com/content/{title}/viewer/' + part_url if flag else ''
+        return f'https://page.kakao.com/content/{title}/viewer/' + part_url if flag else None
 
     @log
-    def ac_qq_com(self, browser: Browser, url: str) -> str:
+    def ac_qq_com(self, browser: Browser, url: str) -> Optional[str]:
         script = "document.getElementById('comicContain').getElementsByTagName('img')"
         scroll_check = lambda j: browser.execute('return '+script + f'[{j}].getAttribute("class");') not in ['loaded', 'network-slow'] and \
                                  browser.execute('return '+script + f'[{j}].getAttribute("id");') != 'adTop'
         images = lambda: [el.get_attribute('src') for el in browser.execute('return '+script+';')]
         flag = self.base_driver_parse(url, browser, 'https://manhua.acimg.cn/manhua_detail/', images, script, scroll_check)
-        return browser.execute("return document.getElementById('nextChapter').href;") if flag else ''
+        return browser.execute("return document.getElementById('nextChapter').href;") if flag else None
 
     # @log
     # def webtoons_com(self, browser: Browser, url: str) -> None:
@@ -222,7 +222,7 @@ class Worker(QObject):
     #         else: break
 
     @log
-    def comic_naver_com(self, browser: Browser, url: str) -> str:
+    def comic_naver_com(self, browser: Browser, url: str) -> Optional[str]:
         if 'weekday' in url:
             url = url[:url.find('weekday') - 1]
         get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'wt_viewer')
@@ -230,21 +230,21 @@ class Worker(QObject):
         return url[:url.rfind('=') + 1] + str(int(url[url.rfind('=') + 1:]) + 1)
 
     @log
-    def webmota_com(self, browser: Browser, url: str) -> str:
+    def webmota_com(self, browser: Browser, url: str) -> Optional[str]:
         get_images = lambda src: self.parser.find_images(src, 'ul', 'class', 'comic-contain', tag='amp-img')
         page_src = self.base_bs_parse(url, get_images, 'src', lambda: False)
         res = self.parser.find_element(page_src, 'div', 'class', 'bottom-bar-tool').find_all('a')[3].get('href')
         return res if res else None
 
     @log
-    def king_manga_com(self, browser: Browser, url: str) -> str:
+    def king_manga_com(self, browser: Browser, url: str) -> Optional[str]:
         get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'reading-content')
         page_src = self.base_bs_parse(url, get_images, 'src', lambda: False)
         res = self.find_element(page_src, 'a', 'class', 'next_page').get('href')
         return res if res else None
 
     @log
-    def kuaikanmanhua_com(self, browser: Browser, url: str) -> str:
+    def kuaikanmanhua_com(self, browser: Browser, url: str) -> Optional[str]:
         get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'imgList')
         page_src = self.base_bs_parse(url, get_images, 'data-src', lambda: False, browser)
         res = self.parser.find_element(page_src, 'div', 'class', 'AdjacentChapters').find_all('a')[-1]
@@ -259,7 +259,7 @@ class Worker(QObject):
         self.parser.full_download(images, title)
 
     @log
-    def ridibooks_com(self, browser: Browser, url: str) -> bool:
+    def ridibooks_com(self, browser: Browser, url: str) -> Optional[str]:
         script = "document.getElementsByClassName('comic_page lazy_load')"
         scroll_check = lambda j: 'loaded' not in browser.execute('return ' + script + f'[{j}].classList;')
         images = lambda: [el.find_element(By.TAG_NAME, 'img').get_attribute('src') for el in browser.execute('return '+script+';')]
