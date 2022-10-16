@@ -152,6 +152,7 @@ Rectangle {
                     '© mechacomic.jp',
                     '© page.kakao.com (+ paid)',
                     'rawdevart.com',
+                    '© remanga.org',
                     '© ridibooks.com (+ paid)',
                     'webmota.com (baozihm.com)',
                     '© webtoons.com'
