@@ -1,4 +1,3 @@
-from ast import Call
 import json
 import time
 from typing import Callable, Optional, Tuple
@@ -9,7 +8,7 @@ from selenium.webdriver.common.by import By
 from utils.logging import log
 from utils.browser import Browser
 from basic_parser import basic_parser
-from config import SYMBOLS_FOR_DELETE, SCROOL_DELAY
+from config import SYMBOLS_FOR_DELETE
 
 
 class Worker(QObject):
@@ -30,7 +29,7 @@ class Worker(QObject):
             'mangakakalot.com': None,
             'mangareader.to': None,
             'manhuadb.com': None,
-            'mechacomic.jp': self.driver_placeholder,
+            'mechacomic.jp': self.mechacomic_jp,
             'page.kakao.com': self.page_kakao_com,
             'rawdevart.com': self.rawdevart_com,
             'ridibooks.com': self.ridibooks_com,
@@ -123,32 +122,50 @@ class Worker(QObject):
         browser.get(url)
         time.sleep(3)
         if script_after_load: script_after_load()
-        title = browser.execute("return document.title;")
-        self.parser.current_title = title
+        self.parser.current_title = browser.execute("return document.title;")
         if scroll_check and scroll_element:
             browser.scroll_page(scroll_element, scroll_check) # Прокрутка страницы
         reqs = self.wait_reqs(browser, reqs_filter) # Отфильтрованные запросы
         self.parser.total_images = len(reqs)
-        images_in_bytes = []
-        filtered_images = filtered_images() # Ссылки на картинки из html-документа
-        for i in range(len(filtered_images)):
-            for j in range(len(reqs)):
-                if filtered_images[i] in reqs[j].url:
-                    images_in_bytes.append(reqs[j].response.body)
-                    reqs.pop(j)
-                    break
-        browser.save_images_from_bytes(self.parser.prepare_save_folder(title), images_in_bytes)
+        images_in_bytes = self.compare_images(filtered_images(), reqs)
+        browser.save_images_from_bytes(self.parser.prepare_save_folder(self.parser.current_title), images_in_bytes)
         return True
 
     @log
+    def compare_images(self, urls: list, reqs: list) -> list:
+        """ Находит среди запросов соответствующий картинке в разметке запрос, получая байты этого запроса. """
+        res = []
+        for i in range(len(urls)):
+            for j in range(len(reqs)):
+                if urls[i] in reqs[j].url:
+                    res.append(reqs[j].response.body)
+                    reqs.pop(j)
+                    break
+        return res
+
+    @log
+    def find_request(self, url: list, reqs: list) -> list:
+        """ Находит среди запросов соответствующий картинке в разметке запрос, получая байты этого запроса. """
+        for req in reqs:
+            if url in req.url:
+                while not req.response.body:
+                    time.sleep(0.1)
+                return req.response.body
+
+    @log
     def driver_placeholder(self, browser: Browser, url: str) -> bool:
-        after_load = lambda: browser.execute("document.getElementsByClassName('ContinueDialog__CancelButton-sc-1yg6q2m-1')[0].click();"), time.sleep(1)
-        script = "document.getElementsByClassName('WebtoonPageContainer__Image-cry93q-1')"
-        scroll_check = lambda j: browser.execute('return '+script+';')[j].get_attribute('src')
-        images = lambda: [el.get_attribute('src') for el in browser.execute('return '+script+';')]
-        flag = self.base_driver_parse(url, browser, 'blob:https://mechacomic.jp', images, script, scroll_check, script_after_load=after_load)
-        s_next = "document.getElementById('bt-btn-next').click();"
-        return '' if flag else False
+        self.parser = basic_parser()
+        browser.get(url)
+        browser.execute("document.getElementsByClassName('TutorialDialog__Close-sc-1w8lkht-1')[0].click();")
+        self.parser.current_title = browser.execute("return document.title;")
+        binaries = []
+        script = "document.getElementsByClassName('PageContainer__Image-sc-13sb3i-5')"
+        for i, el in enumerate(browser.execute('return '+script+';')):
+            browser.execute(script + f'[{i}].scrollIntoView();')
+            while not el.get_attribute('src'): time.sleep(0.1)
+            binaries.append(browser.get_blob(el.get_attribute('src')))
+        browser.save_images_from_bytes(self.parser.prepare_save_folder(self.parser.current_title), binaries)    
+        return False
 
     @log
     def wait_reqs(self, browser: Browser, filter_func: Callable) -> list:
@@ -270,3 +287,18 @@ class Worker(QObject):
         js = js[js.rfind('"')+1:]
         new_url = 'https://view.ridibooks.com/books/' + js
         return new_url if flag else None
+
+    @log
+    def mechacomic_jp(self, browser: Browser, url: str) -> bool:
+        self.parser = basic_parser()
+        browser.get(url)
+        browser.execute("document.getElementsByClassName('TutorialDialog__Close-sc-1w8lkht-1')[0].click();")
+        self.parser.current_title = browser.execute("return document.title;")
+        binaries = []
+        script = "document.getElementsByClassName('PageContainer__Image-sc-13sb3i-5')"
+        for i, el in enumerate(browser.execute('return '+script+';')):
+            browser.execute(script + f'[{i}].scrollIntoView();')
+            while not el.get_attribute('src'): time.sleep(0.1)
+            binaries.append(browser.get_blob(el.get_attribute('src')))
+        browser.save_images_from_bytes(self.parser.prepare_save_folder(self.parser.current_title), binaries)    
+        return False
