@@ -123,6 +123,17 @@ class Browser:
         return self.driver.current_url
 
     @log
+    def wait_reqs(self, filter_func: str) -> list:
+        """ Ожидает ответа на все запросы к картинкам. """
+        length = 0
+        arr = list(set(filter(lambda x: filter_func in x.url, self.requests())))
+        while len(arr) > length:
+            length = len(arr)
+            time.sleep(3)
+            arr = list(set(filter(lambda x: filter_func in x.url, self.requests())))
+        return arr
+
+    @log
     def save_images_from_bytes(self, path: str, list_bytes: list) -> None:
         """ Сохраняет картинки из перехваченных байтов. """
         for name, img in zip(range(1, len(list_bytes) + 1), list_bytes):
