@@ -289,7 +289,7 @@ class Worker(QObject):
         return new_url if flag else None
 
     @log
-    def mechacomic_jp(self, browser: Browser, url: str) -> bool:
+    def mechacomic_jp(self, browser: Browser, url: str) -> None:
         self.parser = basic_parser()
         browser.get(url)
         browser.execute("document.getElementsByClassName('TutorialDialog__Close-sc-1w8lkht-1')[0].click();")
@@ -301,4 +301,3 @@ class Worker(QObject):
             while not el.get_attribute('src'): time.sleep(0.1)
             binaries.append(browser.get_blob(el.get_attribute('src')))
         browser.save_images_from_bytes(self.parser.prepare_save_folder(self.parser.current_title), binaries)    
-        return False
