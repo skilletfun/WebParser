@@ -149,12 +149,12 @@ Rectangle {
                     'mangakakalot.com',
                     '© mangareader.to',
                     'manhuadb.com',
-                    'mechacomic.jp',
+                    '© mechacomic.jp',
                     '© page.kakao.com (+ paid)',
                     'rawdevart.com',
                     '© ridibooks.com (+ paid)',
                     'webmota.com (baozihm.com)',
-                    'webtoons.com'
+                    '© webtoons.com'
                 ];
                 arr.forEach(function(el){ append({ '_text': el }); });
             }
