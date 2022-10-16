@@ -19,7 +19,7 @@ class Worker(QObject):
 
         self.SITES = {
             'ac.qq.com': self.ac_qq_com,
-            'bomtoon.com': None,
+            'bomtoon.com': self.bomtoon_com,
             'comic.naver.com': self.comic_naver_com,
             'comico.kr': None,
             'fanfox.net': None,
@@ -143,6 +143,12 @@ class Worker(QObject):
     #                   ---------------------------------
     #                   ----------   PARSERS   ----------
     #                   ---------------------------------
+
+    @log
+    def bomtoon_com(self, browser: Browser, url: str) -> Optional[str]:
+        images = lambda: [el[el.find('/') : el.find('?')] for el in browser.execute("return document.getElementById('bt-data').getAttribute('data-images');").split(',')]
+        flag = self.base_driver_parse(url, browser, 'https://image.bomtoon.com/assets/', images)
+        return '' if flag else None
 
     @log
     def remanga_org(self, browser: Browser, url: str) -> Optional[str]:
