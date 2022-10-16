@@ -14,7 +14,7 @@ from config import SYMBOLS_FOR_DELETE, NEW_REMANGA
 class Worker(QObject):
     def __init__(self, url: str, chapters_count: str) -> None:
         super(Worker, self).__init__()
-        self.url = 'https://' + url if not (url.startswith('http') or url.startswith('file://')) else url
+        self.url = url
         self.chapters_count, self.step = self.fix_chapter_count(chapters_count)
 
         self.SITES = {
