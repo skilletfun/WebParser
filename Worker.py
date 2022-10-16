@@ -14,7 +14,7 @@ from config import SYMBOLS_FOR_DELETE
 class Worker(QObject):
     def __init__(self, url: str, chapters_count: str) -> None:
         super(Worker, self).__init__()
-        self.url = 'https://' + url if not url.startswith('http') else url
+        self.url = 'https://' + url if not (url.startswith('http') or url.startswith('file://')) else url
         self.chapters_count, self.step = self.fix_chapter_count(chapters_count)
 
         self.SITES = {
@@ -32,6 +32,7 @@ class Worker(QObject):
             'mechacomic.jp': self.mechacomic_jp,
             'page.kakao.com': self.page_kakao_com,
             'rawdevart.com': self.rawdevart_com,
+            'remanga.org': self.remanga_org,
             'ridibooks.com': self.ridibooks_com,
             'webmota.com': self.webmota_com,
             'webtoons.com': self.webtoons_com
@@ -47,21 +48,23 @@ class Worker(QObject):
                 if urls[-1] in ['\n', '']: urls.pop()
         else: urls = [self.url]
         browser = None
-        for url in urls:
-            counter = self.chapters_count # Счетчик обнуляется для каждой новой ссылки (если указан файл со ссылками)
-            for site in self.SITES.keys():
-                if site in url:
-                    if not browser:
-                        browser = Browser()
-                    time.sleep(0.5)
-                    # Будут парситься главы по порядку до тех пор, пока не появится битая ссылка или не кончится счетчик 
-                    while url and counter:
-                        url = self.SITES[site](browser, url)
-                        counter -= self.step
-                    time.sleep(1)
-                    break
-            time.sleep(1)
-        if browser: browser.shutdown()
+        try:
+            for url in urls:
+                counter = self.chapters_count # Счетчик обнуляется для каждой новой ссылки (если указан файл со ссылками)
+                for site in self.SITES.keys():
+                    if site in url:
+                        if not browser:
+                            browser = Browser()
+                        time.sleep(0.5)
+                        # Будут парситься главы по порядку до тех пор, пока не появится битая ссылка или не кончится счетчик 
+                        while url and counter:
+                            url = self.SITES[site](browser, url)
+                            counter -= self.step
+                        time.sleep(1)
+                        break
+                time.sleep(1)
+        finally:
+            if browser: browser.shutdown()
         self.running = False
 
     @log
@@ -137,21 +140,16 @@ class Worker(QObject):
                     break
         return res
 
-    @log
-    def driver_placeholder(self, browser: Browser, url: str) -> Optional[str]:
-        self.parser = basic_parser()
-        src = browser.get(url)
-        self.parser.current_title, images = self.parser.find_images(src, 'div', 'id', '_imageList')
-        images = [img.get('data-url') for img in images]
-        reqs = browser.wait_reqs('https://webtoon-phinf.pstatic.net')
-        images_in_bytes = self.compare_images(images, reqs)
-        browser.save_images_from_bytes(self.parser.prepare_save_folder(self.parser.current_title), images_in_bytes)
-        res = self.parser.find_element(src, 'a', 'class', '_nextEpisode').get('href')
-        return res if res else None
+    #                   ---------------------------------
+    #                   ----------   PARSERS   ----------
+    #                   ---------------------------------
 
-    #               ---------------------------------
-    #               ----------   PARSERS   ----------
-    #               ---------------------------------
+    @log
+    def remanga_org(self, browser: Browser, url: str) -> Optional[str]:
+        script = "return document.getElementsByClassName('content')[0].getElementsByTagName('img');"
+        images = lambda: [el.get_attribute('src') for el in browser.execute(script)][:-1]
+        flag = self.base_driver_parse(url, browser, 'https://', images)
+        return '' if flag else None
 
     @log
     def page_kakao_com(self, browser: Browser, url: str) -> Optional[str]:
