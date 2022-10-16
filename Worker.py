@@ -168,7 +168,7 @@ class Worker(QObject):
     def page_kakao_com(self, browser: Browser, url: str) -> Optional[str]:
         script = "return document.getElementsByClassName('css-3q7n7r-ScrollImageViewerImage');"
         images = lambda: [el.get_attribute('src') for el in browser.execute(script)]
-        flag = self.base_driver_parse(url, browser, 'https://page-edge.kakao.com/sdownload', images)
+        flag = self.base_driver_parse(url, browser, 'https://page-edge.kakao.com/sdownload', images, script_after_load=lambda: time.sleep(10))
         part_url = json.loads(browser.execute("return document.getElementsByClassName('css-1gzfypn-ViewerNavbarMenu')[0].getAttribute('data-t-obj');"))['eventMeta']['id']
         title = json.loads(browser.execute("return document.getElementById('__NEXT_DATA__').text;"))['props']['pageProps']['seriesId']
         return f'https://page.kakao.com/content/{title}/viewer/' + part_url if flag else None
