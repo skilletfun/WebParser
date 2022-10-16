@@ -94,12 +94,6 @@ class Worker(QObject):
         return src
 
     @log
-    def bs_placeholder(self, browser: Browser, url: str) -> None:
-        for _ in range(0, self.chapters_count, self.step):
-            get_images = lambda src: self.parser.find_images(src, 'div', 'class', 'wt_viewer')
-            self.base_bs_parse(url, get_images, 'src', lambda: 'list?titleId' in browser.current_url(), browser)
-
-    @log
     def base_driver_parse(
         self,
         url: str,
