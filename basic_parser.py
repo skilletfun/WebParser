@@ -82,14 +82,6 @@ class basic_parser(QObject):
         return title_page, images
 
     @log
-    def find_tilte(self, format_str=None):
-        title_page = soup.find('title').text
-        if format_str:
-            title_page = format_str(title_page)
-        return title_page
-
-
-    @log
     def download_images(self, images: list) -> None:
         """ Запускает скачку картинок. """
         asyncio.run(self.async_download_images(images))
