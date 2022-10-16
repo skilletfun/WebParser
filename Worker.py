@@ -1,3 +1,4 @@
+from ast import Call
 import json
 import time
 from typing import Callable, Optional, Tuple
@@ -29,7 +30,7 @@ class Worker(QObject):
             'mangakakalot.com': None,
             'mangareader.to': None,
             'manhuadb.com': None,
-            'mechacomic.jp': None,
+            'mechacomic.jp': self.driver_placeholder,
             'page.kakao.com': self.page_kakao_com,
             'rawdevart.com': self.rawdevart_com,
             'ridibooks.com': self.ridibooks_com,
@@ -107,7 +108,8 @@ class Worker(QObject):
         reqs_filter: str,
         filtered_images: Callable,
         scroll_element: str=None,
-        scroll_check: Callable=None
+        scroll_check: Callable=None,
+        script_after_load: Callable=None
     ) -> bool:
         """ Прогружает страницу в браузере, а затем сохраняет картинки, полученые через запросы, перехватывая их.
         :param url: ссылка на страницу (главу)
@@ -120,6 +122,7 @@ class Worker(QObject):
         self.parser = basic_parser()
         browser.get(url)
         time.sleep(3)
+        if script_after_load: script_after_load()
         title = browser.execute("return document.title;")
         self.parser.current_title = title
         if scroll_check and scroll_element:
@@ -139,17 +142,13 @@ class Worker(QObject):
 
     @log
     def driver_placeholder(self, browser: Browser, url: str) -> bool:
-        script = "document.getElementsByClassName('comic_page lazy_load')"
-        scroll_check = lambda j: 'loaded' not in browser.execute('return ' + script + f'[{j}].classList;')
-        images = lambda: [el.find_element(By.TAG_NAME, 'img').get_attribute('src') for el in browser.execute('return '+script+';')]
-        flag = self.base_driver_parse(url, browser, 'https://webview-cache', images, script, scroll_check)
-        js = browser.execute("return document.getElementsByTagName('script');")
-        js = [el for el in js if el.get_property('textContent').strip().startswith('window.dispatchEvent')][0]
-        js = js[js.find('next_book'):]
-        js = js[:js.find(',')-1]
-        js = js[js.rfind('"')+1:]
-        new_url = 'https://view.ridibooks.com/books/' + js
-        return new_url if flag else False
+        after_load = lambda: browser.execute("document.getElementsByClassName('ContinueDialog__CancelButton-sc-1yg6q2m-1')[0].click();"), time.sleep(1)
+        script = "document.getElementsByClassName('WebtoonPageContainer__Image-cry93q-1')"
+        scroll_check = lambda j: browser.execute('return '+script+';')[j].get_attribute('src')
+        images = lambda: [el.get_attribute('src') for el in browser.execute('return '+script+';')]
+        flag = self.base_driver_parse(url, browser, 'blob:https://mechacomic.jp', images, script, scroll_check, script_after_load=after_load)
+        s_next = "document.getElementById('bt-btn-next').click();"
+        return '' if flag else False
 
     @log
     def wait_reqs(self, browser: Browser, filter_func: Callable) -> list:
