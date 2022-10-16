@@ -26,7 +26,7 @@ class Worker(QObject):
             'kuaikanmanhua.com': self.kuaikanmanhua_com,
             'king-manga.com': self.king_manga_com,
             'manga.bilibili.com': None,
-            'mangakakalot.com': None,
+            'mangakakalot.com': self.mangakakalot_com,
             'mangareader.to': None,
             'manhuadb.com': None,
             'mechacomic.jp': self.mechacomic_jp,
@@ -183,24 +183,17 @@ class Worker(QObject):
         res = self.parser.find_element(src, 'a', 'class', '_nextEpisode').get('href')
         return res if res else None
 
-    # @log
-    # def mangakakalot_com(self, browser: Browser, url: str) -> None:
-    #     #
-    #     #   NEED FIX (ACCESS DENIED)
-    #     #
-    #     self.parser = basic_parser()
-    #     url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
-    #     while True:
-    #         self.chapters_count -= step
-    #         src = self.parser.get_response(url)
-    #         title, images = self.parser.find_images(src, 'div', 'class', 'container-chapter-reader')
-    #         images = [img.get('src') for img in images]
-    #         self.parser.full_download(images, title)
-    #         if self.chapters_count > 0:
-    #             res = bs(src, 'lxml').find_all('a', {'class': 'back'})[-1]
-    #             if res: url = res.get('href')
-    #             else: break
-    #         else: break
+    @log
+    def mangakakalot_com(self, browser: Browser, url: str) -> Optional[str]:
+        self.parser = basic_parser()
+        src = browser.get(url)
+        self.parser.current_title, images = self.parser.find_images(src, 'div', 'class', 'container-chapter-reader')
+        images = [img.get('src') for img in images]
+        reqs = browser.wait_reqs('https://')
+        images_in_bytes = self.compare_images(images, reqs)
+        browser.save_images_from_bytes(self.parser.prepare_save_folder(self.parser.current_title), images_in_bytes)
+        res = browser.execute("return document.getElementsByClassName('back')[0].href;")
+        return res if res else None
 
     @log
     def comic_naver_com(self, browser: Browser, url: str) -> Optional[str]:
