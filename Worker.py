@@ -34,7 +34,7 @@ class Worker(QObject):
             'rawdevart.com': self.rawdevart_com,
             'ridibooks.com': self.ridibooks_com,
             'webmota.com': self.webmota_com,
-            'webtoons.com': None
+            'webtoons.com': self.webtoons_com
         }
 
     @pyqtSlot()
@@ -125,7 +125,7 @@ class Worker(QObject):
         self.parser.current_title = browser.execute("return document.title;")
         if scroll_check and scroll_element:
             browser.scroll_page(scroll_element, scroll_check) # Прокрутка страницы
-        reqs = self.wait_reqs(browser, reqs_filter) # Отфильтрованные запросы
+        reqs = browser.wait_reqs(reqs_filter)
         self.parser.total_images = len(reqs)
         images_in_bytes = self.compare_images(filtered_images(), reqs)
         browser.save_images_from_bytes(self.parser.prepare_save_folder(self.parser.current_title), images_in_bytes)
@@ -144,39 +144,16 @@ class Worker(QObject):
         return res
 
     @log
-    def find_request(self, url: list, reqs: list) -> list:
-        """ Находит среди запросов соответствующий картинке в разметке запрос, получая байты этого запроса. """
-        for req in reqs:
-            if url in req.url:
-                while not req.response.body:
-                    time.sleep(0.1)
-                return req.response.body
-
-    @log
-    def driver_placeholder(self, browser: Browser, url: str) -> bool:
+    def driver_placeholder(self, browser: Browser, url: str) -> Optional[str]:
         self.parser = basic_parser()
-        browser.get(url)
-        browser.execute("document.getElementsByClassName('TutorialDialog__Close-sc-1w8lkht-1')[0].click();")
-        self.parser.current_title = browser.execute("return document.title;")
-        binaries = []
-        script = "document.getElementsByClassName('PageContainer__Image-sc-13sb3i-5')"
-        for i, el in enumerate(browser.execute('return '+script+';')):
-            browser.execute(script + f'[{i}].scrollIntoView();')
-            while not el.get_attribute('src'): time.sleep(0.1)
-            binaries.append(browser.get_blob(el.get_attribute('src')))
-        browser.save_images_from_bytes(self.parser.prepare_save_folder(self.parser.current_title), binaries)    
-        return False
-
-    @log
-    def wait_reqs(self, browser: Browser, filter_func: Callable) -> list:
-        """ Ожидает ответа на все запросы. """
-        length = 0
-        arr = list(set(filter(lambda x: filter_func in x.url, browser.requests())))
-        while len(arr) > length:
-            length = len(arr)
-            time.sleep(3)
-            arr = list(set(filter(lambda x: filter_func in x.url, browser.requests())))
-        return arr
+        src = browser.get(url)
+        self.parser.current_title, images = self.parser.find_images(src, 'div', 'id', '_imageList')
+        images = [img.get('data-url') for img in images]
+        reqs = browser.wait_reqs('https://webtoon-phinf.pstatic.net')
+        images_in_bytes = self.compare_images(images, reqs)
+        browser.save_images_from_bytes(self.parser.prepare_save_folder(self.parser.current_title), images_in_bytes)
+        res = self.parser.find_element(src, 'a', 'class', '_nextEpisode').get('href')
+        return res if res else None
 
     #               ---------------------------------
     #               ----------   PARSERS   ----------
@@ -200,23 +177,17 @@ class Worker(QObject):
         flag = self.base_driver_parse(url, browser, 'https://manhua.acimg.cn/manhua_detail/', images, script, scroll_check)
         return browser.execute("return document.getElementById('nextChapter').href;") if flag else None
 
-    # @log
-    # def webtoons_com(self, browser: Browser, url: str) -> None:
-    #     #
-    #     #   NEED FIX (ACCESS DENIED)
-    #     #
-    #     self.parser = basic_parser()
-    #     url, self.chapters_count, step = self.parser.fix_vars(url, self.chapters_count)
-    #     while True:
-    #         self.chapters_count -= step
-    #         src = self.parser.get_response(url)
-    #         title, images = self.parser.find_images(src, 'div', 'id', '_imageList')
-    #         images = [img.get('data-url') for img in images]
-    #         self.parser.full_download(images, title)
-    #         if self.chapters_count > 0:
-    #             res = self.parser.find_element(src, 'a', 'class', '_nextEpisode')
-    #             if not (url := res.get('href')): break
-    #         else: break
+    @log
+    def webtoons_com(self, browser: Browser, url: str) -> Optional[str]:
+        self.parser = basic_parser()
+        src = browser.get(url)
+        self.parser.current_title, images = self.parser.find_images(src, 'div', 'id', '_imageList')
+        images = [img.get('data-url') for img in images]
+        reqs = browser.wait_reqs('https://webtoon-phinf.pstatic.net')
+        images_in_bytes = self.compare_images(images, reqs)
+        browser.save_images_from_bytes(self.parser.prepare_save_folder(self.parser.current_title), images_in_bytes)
+        res = self.parser.find_element(src, 'a', 'class', '_nextEpisode').get('href')
+        return res if res else None
 
     # @log
     # def mangakakalot_com(self, browser: Browser, url: str) -> None:
