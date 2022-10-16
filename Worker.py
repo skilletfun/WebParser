@@ -8,7 +8,7 @@ from selenium.webdriver.common.by import By
 from utils.logging import log
 from utils.browser import Browser
 from basic_parser import basic_parser
-from config import SYMBOLS_FOR_DELETE
+from config import SYMBOLS_FOR_DELETE, NEW_REMANGA
 
 
 class Worker(QObject):
@@ -146,10 +146,17 @@ class Worker(QObject):
 
     @log
     def remanga_org(self, browser: Browser, url: str) -> Optional[str]:
-        script = "return document.getElementsByClassName('content')[0].getElementsByTagName('img');"
+        if NEW_REMANGA:
+            script = "return document.getElementsByClassName('content')[0].getElementsByTagName('img');" 
+        else:
+            script = "return document.getElementById('app').getElementsByTagName('img');" 
         images = lambda: [el.get_attribute('src') for el in browser.execute(script)][:-1]
         flag = self.base_driver_parse(url, browser, 'https://', images)
         return '' if flag else None
+
+    @log
+    def manhuadb_com(self, browser: Browser, url: str) -> Optional[str]:
+        ...
 
     @log
     def page_kakao_com(self, browser: Browser, url: str) -> Optional[str]:

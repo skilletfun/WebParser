@@ -21,7 +21,7 @@ SAVE_FOLDER = "C:\\Users\\user\\Downloads"
 PATH_TO_BROWSER = "C:\\Users\\user\\AppData\\Local\\Chromium\\User Data"
 
 # Посылать ли уведомленя о завершении работы (True / False)
-NOTIFY = True
+NOTIFY = False
 
 # Сколько за раз запрашивается сканов
 REQUESTS_LIMIT = 10
@@ -30,7 +30,10 @@ REQUESTS_LIMIT = 10
 DOWNLOAD_TRIES = 10
 
 # Задержка в секундах для скролла страницы
-SCROOL_DELAY = 0.5
+SCROOL_DELAY = 0.7
+
+# Используется ли в браузере новый интерфейс реманги или старый (True / False)
+NEW_REMANGA = True
 
 # Версия программы
 VERSION = "v1.8"
